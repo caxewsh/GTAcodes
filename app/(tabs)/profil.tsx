@@ -1,11 +1,10 @@
-import { StatusBar } from 'expo-status-bar';
+import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-export default function App() {
+export default function Profil() {
   return (
     <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
+      <Text style={styles.text}>profil!</Text>
     </View>
   );
 }
@@ -13,8 +12,11 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#000', // Dark background
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  text: {
+    color: '#FF5733', // Updated text color
   },
 });
