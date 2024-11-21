@@ -14,7 +14,8 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.axe.l.r.GTAcodes"
     },
     "android": {
       "adaptiveIcon": {
@@ -24,6 +25,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "5b9d2674-61d2-4e5d-be58-0626b892336a"
+      }
+    },
+    "owner": "axe.l.r"
   }
 }
