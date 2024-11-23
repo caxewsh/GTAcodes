@@ -31,6 +31,9 @@
         "projectId": "5b9d2674-61d2-4e5d-be58-0626b892336a"
       }
     },
-    "owner": "axe.l.r"
+    "owner": "axe.l.r",
+    "plugins": [
+      "expo-router"
+    ]
   }
 }
