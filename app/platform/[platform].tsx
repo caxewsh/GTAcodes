@@ -32,7 +32,9 @@ const PlatformGamesScreen = () => {
     router.push({
       pathname: '/codes/[codes]',
       params: { game: gameTitle, platform: platformKey },
+      
     });
+    console.log(gameTitle, platformKey);
   };
 
   return (

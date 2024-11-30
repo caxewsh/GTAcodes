@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, FlatList, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
-import { supabase } from '../../utils/supabase'; // Ensure supabase is configured correctly
+import { supabase } from '../../utils/supabase';
 
 interface CheatCode {
-  cheatName: string; // Corresponds to cheatName in Supabase
-  cheatCode: string; // Corresponds to cheatCode in Supabase
+  cheatName: string;
+  cheatCode: string;
+  cheatCategory: string;
 }
 
 const GameCheatScreen = () => {
-  const { game } = useLocalSearchParams();
+  const { game, platform } = useLocalSearchParams();
   const navigation = useNavigation();
   const [cheats, setCheats] = useState<CheatCode[]>([]);
   const [loading, setLoading] = useState(true);
@@ -19,13 +20,14 @@ const GameCheatScreen = () => {
       setLoading(true);
       try {
         const { data, error } = await supabase
-          .from('CheatsGTA5V2') // Replace with your Supabase table name
-          .select('cheatName: cheatName, cheatCode: cheatCode') // Map columns to your desired structure
-          .eq('game', game);
+          .from('CheatsGTA5V2')
+          .select('cheatName: cheatName, cheatCode: cheatCode, cheatCategory: cheatCategory')
+          .eq('game', game)
+          .eq('platform', platform);
 
         if (error) {
           console.error('Error fetching cheats:', error);
-          setCheats([]); // Ensure state is set even on error
+          setCheats([]);
         } else {
           setCheats(data || []);
         }
@@ -64,21 +66,23 @@ const GameCheatScreen = () => {
 
   return (
     <View style={styles.container}>
-      <FlatList
-        data={cheats}
-        keyExtractor={(item) => item.cheatName}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <Text style={styles.cheatName}>{item.cheatName}</Text>
-            <Text style={styles.cheatCode}>{item.cheatCode}</Text>
-          </View>
-        )}
-        ListEmptyComponent={
+      <ScrollView contentContainerStyle={styles.scrollViewContainer}>
+        {cheats.length > 0 ? (
+          cheats.map((item, index) => (
+            <View key={`${item.cheatName}-${index}`} style={styles.card}>
+              <View style={styles.cheatCategoryTag}>
+                <Text style={styles.cheatCategoryText}>{item.cheatCategory.toUpperCase()}</Text>
+              </View>
+              <Text style={styles.cheatName}>{item.cheatName}</Text>
+              <Text style={styles.cheatCode}>{item.cheatCode}</Text>
+            </View>
+          ))
+        ) : (
           <Text style={styles.noDataText}>
             No cheats available for {game}.
           </Text>
-        }
-      />
+        )}
+      </ScrollView>
     </View>
   );
 };
@@ -95,12 +99,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#000',
   },
+  scrollViewContainer: {
+    paddingVertical: 10,
+  },
   card: {
-    backgroundColor: '#333',
-    padding: 20,
+    backgroundColor: '#1e1e1e',
+    padding: 15,
     marginVertical: 10,
-    borderRadius: 15,
+    borderRadius: 10,
+    borderColor: '#333',
     borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 2,
+    elevation: 5,
+  },
+  cheatCategoryTag: {
+    backgroundColor: '#FFDD44',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    alignSelf: 'flex-start', // Make sure the tag doesn't stretch
+    marginBottom: 8,
+  },
+  cheatCategoryText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#222', // Darker color for a good contrast with the tag background
   },
   cheatName: {
     fontSize: 18,
@@ -110,7 +136,7 @@ const styles = StyleSheet.create({
   },
   cheatCode: {
     fontSize: 16,
-    color: '#fff',
+    color: '#ddd',
   },
   noDataText: {
     fontSize: 16,
