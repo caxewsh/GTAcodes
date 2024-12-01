@@ -58,7 +58,7 @@ const CheatFilters = ({ categories, selectedCategory, onSelectCategory }: CheatF
               <Text style={[
                 styles.filterText,
                 selectedCategory === null && styles.filterTextActive
-              ]}>All</Text>
+              ]}>Tous</Text>
             </TouchableOpacity>
           </Animated.View>
           
