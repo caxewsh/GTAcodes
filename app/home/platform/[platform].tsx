@@ -2,23 +2,23 @@
 
 import React from 'react';
 import { StyleSheet, View, FlatList } from 'react-native';
-import { useLocalSearchParams, useNavigation } from 'expo-router';
-import { platformGames } from '../../constants/GameData';
-import GameCard from '../../components/GameCard'; // Ensure this import path is correct
+import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
+import { platformGames } from '../../../constants/GameData';
+import GameCard from '../../../components/GameCard'; // Ensure this import path is correct
 
 const PlatformGamesScreen = () => {
   const { platform } = useLocalSearchParams();
+  const router = useRouter();
   const platformKey = Array.isArray(platform) ? platform[0] : platform;
   const games = platformKey && platformGames[platformKey.toLowerCase()];
 
-  // Hook into the navigation to configure header options
   const navigation = useNavigation();
   React.useLayoutEffect(() => {
     if (navigation) {
       navigation.setOptions({
         headerTitle: `Jeux ${platformKey}`,
         headerTintColor: '#FF5733',
-        headerBackTitleVisible: false, // Hides the back title
+        headerBackTitleVisible: false,
         headerStyle: {
           backgroundColor: '#000',
           borderBottomColor: '#333',
@@ -27,6 +27,15 @@ const PlatformGamesScreen = () => {
       });
     }
   }, [navigation, platformKey]);
+
+  const handleGameSelect = (gameTitle: string) => {
+    router.push({
+      pathname: '/home/codes/[codes]',
+      params: { game: gameTitle, platform: platformKey },
+      
+    });
+    console.log(gameTitle, platformKey);
+  };
 
   return (
     <View style={styles.container}>
@@ -39,6 +48,7 @@ const PlatformGamesScreen = () => {
               title={item.title}
               image={item.image}
               description={item.description}
+              onPress={() => handleGameSelect(item.title)}
             />
           )}
         />
@@ -52,6 +62,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
     padding: 10,
+    paddingBottom: 80,
   },
 });
 
