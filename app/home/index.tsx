@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
     marginVertical: 20, // Space above and below the header
   },
   text: {
-    color: '#FFFFFF',
+    color: '#E5F993',
     fontSize: 20,
     fontWeight: 'bold',
   },

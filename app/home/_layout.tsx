@@ -15,7 +15,7 @@ export default function HomeLayout() {
         name="platform/[platform]" 
         options={{
           headerShown: true,
-          headerTintColor: '#FF5733',
+          headerTintColor: '#E5F993',
           headerBackTitle: 'Retour',
           headerStyle: {
             backgroundColor: '#000',
@@ -28,7 +28,7 @@ export default function HomeLayout() {
         name="codes/[codes]" 
         options={{
           headerShown: true,
-          headerTintColor: '#FF5733',
+          headerTintColor: '#E5F993',
           headerBackTitle: 'Retour',
           headerStyle: {
             backgroundColor: '#000',
