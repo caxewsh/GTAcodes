@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Text, ScrollView, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { supabase } from '../../../utils/supabase';
+import CheatFilters from '../../../components/CheatFilters';
 
 interface CheatCode {
   cheatName: string;
@@ -14,6 +15,8 @@ const GameCheatScreen = () => {
   const navigation = useNavigation();
   const [cheats, setCheats] = useState<CheatCode[]>([]);
   const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCheats = async () => {
@@ -21,7 +24,7 @@ const GameCheatScreen = () => {
       try {
         const { data, error } = await supabase
           .from('CheatsGTA5V2')
-          .select('cheatName: cheatName, cheatCode: cheatCode, cheatCategory: cheatCategory')
+          .select('cheatName, cheatCode, cheatCategory')
           .eq('game', game)
           .eq('platform', platform);
 
@@ -30,6 +33,8 @@ const GameCheatScreen = () => {
           setCheats([]);
         } else {
           setCheats(data || []);
+          const uniqueCategories = [...new Set(data?.map(cheat => cheat.cheatCategory))];
+          setCategories(uniqueCategories);
         }
       } catch (error) {
         console.error('Unexpected error:', error);
@@ -41,11 +46,15 @@ const GameCheatScreen = () => {
     fetchCheats();
   }, [game]);
 
+  const filteredCheats = selectedCategory
+    ? cheats.filter(cheat => cheat.cheatCategory === selectedCategory)
+    : cheats;
+
   React.useLayoutEffect(() => {
     if (game && navigation) {
       navigation.setOptions({
         headerTitle: `Cheats for ${game}`,
-        headerTintColor: '#FF5733',
+        headerTintColor: '#E5F993',
         headerBackTitleVisible: false,
         headerStyle: {
           backgroundColor: '#000',
@@ -59,16 +68,21 @@ const GameCheatScreen = () => {
   if (loading) {
     return (
       <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#FF5733" />
+        <ActivityIndicator size="large" color="#E5F993" />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
+      <CheatFilters
+        categories={categories}
+        selectedCategory={selectedCategory}
+        onSelectCategory={setSelectedCategory}
+      />
       <ScrollView contentContainerStyle={styles.scrollViewContainer}>
-        {cheats.length > 0 ? (
-          cheats.map((item, index) => (
+        {filteredCheats.length > 0 ? (
+          filteredCheats.map((item, index) => (
             <View key={`${item.cheatName}-${index}`} style={styles.card}>
               <View style={styles.cheatCategoryTag}>
                 <Text style={styles.cheatCategoryText}>{item.cheatCategory.toUpperCase()}</Text>
@@ -79,7 +93,7 @@ const GameCheatScreen = () => {
           ))
         ) : (
           <Text style={styles.noDataText}>
-            No cheats available for {game}.
+            No cheats available for {selectedCategory ? `${selectedCategory} category in ` : ''}{game}.
           </Text>
         )}
       </ScrollView>
@@ -117,7 +131,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   cheatCategoryTag: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#E5F993',
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -138,6 +152,7 @@ const styles = StyleSheet.create({
   cheatCode: {
     fontSize: 16,
     color: '#ddd',
+    fontStyle: 'italic',
   },
   noDataText: {
     fontSize: 16,

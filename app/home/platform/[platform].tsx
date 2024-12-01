@@ -17,7 +17,7 @@ const PlatformGamesScreen = () => {
     if (navigation) {
       navigation.setOptions({
         headerTitle: `Jeux ${platformKey}`,
-        headerTintColor: '#FF5733',
+        headerTintColor: '#E5F993',
         headerBackTitleVisible: false,
         headerStyle: {
           backgroundColor: '#000',
