@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Text, ScrollView, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
-import { supabase } from '../../utils/supabase';
+import { supabase } from '../../../utils/supabase';
 
 interface CheatCode {
   cheatName: string;
@@ -101,6 +101,7 @@ const styles = StyleSheet.create({
   },
   scrollViewContainer: {
     paddingVertical: 10,
+    paddingBottom: 80,
   },
   card: {
     backgroundColor: '#1e1e1e',
@@ -116,7 +117,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   cheatCategoryTag: {
-    backgroundColor: '#FFDD44',
+    backgroundColor: '#FFFFFF',
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 4,

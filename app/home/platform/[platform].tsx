@@ -3,8 +3,8 @@
 import React from 'react';
 import { StyleSheet, View, FlatList } from 'react-native';
 import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
-import { platformGames } from '../../constants/GameData';
-import GameCard from '../../components/GameCard'; // Ensure this import path is correct
+import { platformGames } from '../../../constants/GameData';
+import GameCard from '../../../components/GameCard'; // Ensure this import path is correct
 
 const PlatformGamesScreen = () => {
   const { platform } = useLocalSearchParams();
@@ -30,7 +30,7 @@ const PlatformGamesScreen = () => {
 
   const handleGameSelect = (gameTitle: string) => {
     router.push({
-      pathname: '/codes/[codes]',
+      pathname: '/home/codes/[codes]',
       params: { game: gameTitle, platform: platformKey },
       
     });
@@ -62,6 +62,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
     padding: 10,
+    paddingBottom: 80,
   },
 });
 

@@ -13,7 +13,7 @@ const PlatformCard: React.FC<PlatformCardProps> = ({ platformName, iconName }) =
 
   const handlePress = () => {
     router.push({
-        pathname: '/platform/[platform]',
+        pathname: '/home/platform/[platform]',
         params: { platform: platformName.toLowerCase() },
     });
   };
