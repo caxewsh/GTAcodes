@@ -1,56 +1,81 @@
 // GameCard.tsx
 
 import React from 'react';
-import { ImageBackground, Text, View, StyleSheet, TouchableOpacity } from 'react-native';
+import { StyleSheet, Pressable, Image, Text, View, ImageStyle } from 'react-native';
+import { colors, spacing, shadows, borderRadius } from '../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
 
-type GameCardProps = {
-  title: string;
-  image: any; // Supports both URI and require sources
-  description: string;
-  onPress?: () => void;
-};
-
-export default function GameCard({ title, image, description, onPress }: GameCardProps) {
-  return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
-      <ImageBackground
-        source={typeof image === 'string' ? { uri: image } : image}
-        style={styles.card}
-        imageStyle={{ borderRadius: 8 }}
-      >
-        <View style={styles.overlay}>
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.description}>{description}</Text>
-        </View>
-      </ImageBackground>
-    </TouchableOpacity>
-  );
+interface GameCardProps {
+  game: {
+    title: string;
+    image: any;
+    description: string;
+  };
+  onPress: () => void;
 }
+
+const GameCard = ({ game, onPress }: GameCardProps) => {
+  return (
+    <Pressable 
+      style={styles.card}
+      onPress={onPress}
+    >
+      <Image 
+        source={game.image} 
+        style={styles.image as ImageStyle}
+      />
+      <View style={styles.content}>
+        <View style={styles.textContainer}>
+          <Text style={styles.title}>{game.title}</Text>
+          <Text style={styles.description}>{game.description}</Text>
+        </View>
+        <View style={styles.iconContainer}>
+          <Ionicons 
+            name="chevron-forward" 
+            size={24} 
+            color={colors.text.secondary}
+          />
+        </View>
+      </View>
+    </Pressable>
+  );
+};
 
 const styles = StyleSheet.create({
   card: {
-    marginBottom: 15,
-    borderRadius: 8,
+    backgroundColor: colors.background.secondary,
+    borderRadius: borderRadius.md,
     overflow: 'hidden',
-    height: 150, // Set a fixed height for the card
-    justifyContent: 'flex-end', // Align content to the bottom
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 5 },
-    shadowRadius: 10,
-    elevation: 5, // Add elevation for Android shadow
+    borderWidth: 1,
+    borderColor: colors.border.primary,
+    ...shadows.small,
   },
-  overlay: {
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent overlay
-    padding: 10,
+  image: {
+    width: '100%',
+    height: 150,
+    resizeMode: 'cover',
+  },
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+  },
+  textContainer: {
+    flex: 1,
   },
   title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff', // White text for better contrast
-    marginBottom: 5,
+    color: colors.text.primary,
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: spacing.xs,
   },
   description: {
-    color: '#fff', // Ensure description text is visible
+    color: colors.text.secondary,
+    fontSize: 14,
+  },
+  iconContainer: {
+    marginLeft: spacing.sm,
   },
 });
+
+export default GameCard;

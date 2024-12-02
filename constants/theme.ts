@@ -1,28 +1,28 @@
 export const colors = {
-  primary: '#E5F993',
+  primary: '#A6E22E',
   background: {
-    primary: '#1A1A1E',
-    secondary: '#242428',
-    tertiary: '#2A2A30',
+    primary: '#1C1C1E',
+    secondary: '#2C2C2E',
+    tertiary: '#3C3C3E',
   },
   border: {
-    primary: '#363640',
-    secondary: '#444450',
+    primary: '#3C3C3E',
+    secondary: '#48484A',
   },
   text: {
     primary: '#FFFFFF',
-    secondary: '#B4B4C0',
-    tertiary: '#8A8A95',
+    secondary: '#8E8E93',
+    tertiary: '#6C6C70',
     dark: '#000000',
   },
-  status: {
-    success: '#4CAF50',
-    error: '#F44336',
-    warning: '#FFC107',
+  tab: {
+    inactive: '#8E8E93',
+    active: '#A6E22E',
+    background: '#2C2C2E',
   },
-  card: {
-    gradient: ['#2A2A30', '#242428'],
-    shadow: 'rgba(0, 0, 0, 0.2)',
+  header: {
+    background: '#2C2C2E',
+    border: '#3C3C3E',
   },
 };
 
@@ -74,7 +74,7 @@ export const typography = {
     medium: '500',
     semibold: '600',
     bold: '700',
-  },
+  } as const,
 };
 
 export default {

@@ -1,4 +1,4 @@
-interface Game {
+export interface Game {
     title: string;
     image: any;
     description: string;

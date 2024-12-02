@@ -1,22 +1,25 @@
 import { Tabs } from 'expo-router';
+import { colors } from '../constants/theme';
+import { BlurView } from 'expo-blur';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
-export default function Layout() {
+export default function AppLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#E5F993',
-        tabBarStyle: { 
-          backgroundColor: '#000',
-          position: 'absolute',
-          bottom: 0,
-        },
-        headerStyle: { 
-          backgroundColor: '#000',
-          borderBottomColor: '#333',
+        headerStyle: {
+          backgroundColor: colors.header.background,
+          borderBottomColor: colors.header.border,
           borderBottomWidth: 1,
         },
-        headerTintColor: '#E5F993',
+        headerTintColor: colors.primary,
+        tabBarStyle: {
+          backgroundColor: colors.tab.background,
+          borderTopColor: colors.header.border,
+          borderTopWidth: 1,
+        },
+        tabBarActiveTintColor: colors.tab.active,
+        tabBarInactiveTintColor: colors.tab.inactive,
       }}
     >
       <Tabs.Screen
