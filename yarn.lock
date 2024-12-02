@@ -2970,6 +2970,11 @@ execa@^5.1.1:
     signal-exit "^3.0.3"
     strip-final-newline "^2.0.0"
 
+expo-apple-authentication@^7.1.2:
+  version "7.1.2"
+  resolved "https://registry.yarnpkg.com/expo-apple-authentication/-/expo-apple-authentication-7.1.2.tgz#2488facb2c7bd3d01743a2ad97dceedeb8a21c47"
+  integrity sha512-4Izjv4e/hV2wK/Eb5W7qJsTfNlLyGndqXRU8ZMvxtVgKItmvWkbOP+8G8cD2G/13IIN+ePr04+5v5tn+JPqxuw==
+
 expo-asset@~11.0.1:
   version "11.0.1"
   resolved "https://registry.yarnpkg.com/expo-asset/-/expo-asset-11.0.1.tgz#8608f5ea4639698553725b6690dd621f6f70f206"
@@ -2979,6 +2984,11 @@ expo-asset@~11.0.1:
     expo-constants "~17.0.0"
     invariant "^2.2.4"
     md5-file "^3.2.3"
+
+expo-blur@^14.0.1:
+  version "14.0.1"
+  resolved "https://registry.yarnpkg.com/expo-blur/-/expo-blur-14.0.1.tgz#4bdbec43b5015891990e78d31d8ff2f1f5d27464"
+  integrity sha512-3Q6jFBLbY8n2vwk28ycUC+eIlVhnlqwkXUKk/Lfaj+SGV3AZMQyrixe7OYwJdUfwqETBrnYYMB6uNrJzOSbG+g==
 
 expo-constants@^17.0.3, expo-constants@~17.0.0, expo-constants@~17.0.3:
   version "17.0.3"
