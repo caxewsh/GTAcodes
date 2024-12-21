@@ -1,14 +1,13 @@
 import { Stack } from 'expo-router';
-import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import { colors } from '../../constants/theme';
 
-const commonHeaderOptions: Partial<NativeStackNavigationOptions> = {
+const commonHeaderOptions = {
   headerShown: true,
   headerTintColor: colors.primary,
   headerBackTitle: 'Retour',
   headerStyle: {
-    backgroundColor: colors.background.primary,
-    borderBottomColor: colors.border.primary,
+    backgroundColor: colors.header.background,
+    borderBottomColor: colors.header.border,
     borderBottomWidth: 1,
   } as any,
 };
