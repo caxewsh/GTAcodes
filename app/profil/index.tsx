@@ -1,14 +1,96 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Alert, Image, SectionList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, typography, shadows, borderRadius } from '../../constants/theme';
+import { colors, spacing, typography, borderRadius, shadows } from '../../constants/theme';
 import { signInWithApple, signOut, getCurrentUser } from '../../utils/auth';
 import * as Haptics from 'expo-haptics';
+import EditProfileModal from '../../components/EditProfileModal';
+import { supabase } from '../../utils/supabase';
+import FavoritesList from '../../components/FavoritesList';
+import { useLikedCodes } from '../../hooks/useLikedCodes';
+import FavoritesPreview from '../../components/FavoritesPreview';
+
+const BADGES = [
+  { 
+    id: 1, 
+    name: 'Débutant', 
+    icon: 'bookmark-outline',
+    description: 'Créez votre première collection',
+    category: 'Collections',
+    progress: 0,
+    total: 1,
+  },
+  { 
+    id: 2, 
+    name: 'Populaire', 
+    icon: 'heart-outline',
+    description: 'Obtenez 10 likes sur une collection',
+    category: 'Social',
+    progress: 0,
+    total: 10,
+    isPremium: true,
+  },
+  { 
+    id: 3, 
+    name: 'Organisé', 
+    icon: 'folder-outline',
+    description: 'Créez 5 collections différentes',
+    category: 'Collections',
+    progress: 0,
+    total: 5,
+    isPremium: true,
+  },
+  { 
+    id: 4, 
+    name: 'Influenceur', 
+    icon: 'trending-up-outline',
+    description: 'Atteignez 50 likes au total',
+    category: 'Social',
+    progress: 0,
+    total: 50,
+    isPremium: true,
+  },
+  { 
+    id: 5, 
+    name: 'Top 10', 
+    icon: 'star-outline',
+    description: 'Une collection dans le top 10',
+    category: 'Social',
+    progress: 0,
+    total: 1,
+    isPremium: true,
+  },
+  { 
+    id: 6, 
+    name: 'Curateur', 
+    icon: 'library-outline',
+    description: 'Sauvegardez 20 codes en favoris',
+    category: 'Favoris',
+    progress: 0,
+    total: 20,
+  },
+  { 
+    id: 7, 
+    name: 'Connecté', 
+    icon: 'share-social-outline',
+    description: 'Partagez 3 collections',
+    category: 'Social',
+    progress: 0,
+    total: 3,
+    isPremium: true,
+  },
+];
 
 export default function ProfilScreen() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
+  const [favorites, setFavorites] = useState([]);
+  const MAX_FREE_FAVORITES = 10;
+  const { likedCodes } = useLikedCodes();
+  const MAX_FREE_LIKES = 10;
 
   useEffect(() => {
     checkUser();
@@ -47,19 +129,67 @@ export default function ProfilScreen() {
     }
   };
 
-  const renderAuthSection = () => (
-    <View style={styles.authSection}>
-      <Ionicons name="person-circle-outline" size={64} color={colors.primary} />
-      <Text style={styles.authTitle}>
-        {user ? `Bienvenue ${user.user_metadata?.full_name || ''}!` : 'Connectez-vous'}
-      </Text>
-      <Text style={styles.authSubtitle}>
-        {user 
-          ? 'Gérez vos codes favoris et vos préférences'
-          : 'Créez un compte pour sauvegarder vos codes favoris'}
-      </Text>
+  const handleUpdateProfile = async (data: { username: string }) => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: { full_name: data.username }
+      });
       
-      {!user ? (
+      if (error) throw error;
+      checkUser(); // Refresh user data
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      Alert.alert('Erreur', "Impossible de mettre à jour le profil");
+    }
+  };
+
+  const handleRemoveFavorite = async (id: string) => {
+    try {
+      // Remove from Supabase
+      const { error } = await supabase
+        .from('favorites')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Update local state
+      setFavorites(prev => prev.filter(fav => fav.id !== id));
+    } catch (error) {
+      console.error('Error removing favorite:', error);
+      Alert.alert('Erreur', "Impossible de supprimer le favori");
+    }
+  };
+
+  const renderProfileCard = () => (
+    <View style={styles.profileCard}>
+      <View style={styles.profileHeader}>
+        <View style={styles.avatarContainer}>
+          <Image 
+            source={require('../../assets/carljohnson.jpg')}
+            style={styles.avatar}
+          />
+          {user && (
+            <Pressable style={styles.editAvatarButton}>
+              <Ionicons name="camera" size={20} color={colors.text.primary} />
+            </Pressable>
+          )}
+        </View>
+        <View style={styles.profileInfo}>
+          <Text style={styles.username}>
+            {user?.user_metadata?.full_name || 'Invité'}
+          </Text>
+          {user && (
+            <Pressable 
+              style={styles.editButton}
+              onPress={() => setEditModalVisible(true)}
+            >
+              <Text style={styles.editButtonText}>Modifier le profil</Text>
+            </Pressable>
+          )}
+        </View>
+      </View>
+      {!user && (
         <Pressable 
           style={styles.appleButton}
           onPress={handleSignIn}
@@ -67,7 +197,8 @@ export default function ProfilScreen() {
           <Ionicons name="logo-apple" size={24} color={colors.text.primary} />
           <Text style={styles.appleButtonText}>Continuer avec Apple</Text>
         </Pressable>
-      ) : (
+      )}
+      {user && (
         <Pressable 
           style={styles.signOutButton}
           onPress={handleSignOut}
@@ -80,42 +211,140 @@ export default function ProfilScreen() {
 
   const renderFavoritesSection = () => (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Vos favoris</Text>
-      {user ? (
-        <>
-          <Pressable style={styles.favoriteCard}>
-            <Ionicons name="star" size={24} color={colors.primary} />
-            <Text style={styles.favoriteTitle}>Codes favoris</Text>
-            <Text style={styles.favoriteCount}>0 codes</Text>
-          </Pressable>
-          
-          <Pressable style={styles.favoriteCard}>
-            <Ionicons name="game-controller" size={24} color={colors.primary} />
-            <Text style={styles.favoriteTitle}>Jeux suivis</Text>
-            <Text style={styles.favoriteCount}>0 jeux</Text>
-          </Pressable>
-
-          <Pressable style={styles.favoriteCard}>
-            <Ionicons name="apps" size={24} color={colors.primary} />
-            <Text style={styles.favoriteTitle}>Plateformes préférées</Text>
-            <Text style={styles.favoriteCount}>0 plateformes</Text>
-          </Pressable>
-        </>
-      ) : (
-        <Text style={styles.emptyText}>
-          Connectez-vous pour voir vos favoris
-        </Text>
-      )}
+      <FavoritesList
+        favorites={favorites}
+        isPremium={isPremium}
+        maxFreeLimit={MAX_FREE_FAVORITES}
+        onRemoveFavorite={handleRemoveFavorite}
+        onPremiumPrompt={() => {
+          // Show premium upgrade prompt
+          Alert.alert(
+            'Limite atteinte',
+            'Passez à la version premium pour sauvegarder plus de favoris !',
+            [
+              { text: 'Plus tard' },
+              { 
+                text: 'Débloquer (0,99 €)', 
+                onPress: () => {/* Implement purchase */} 
+              }
+            ]
+          );
+        }}
+      />
     </View>
   );
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView>
-        {renderAuthSection()}
-        {renderFavoritesSection()}
+  const renderBadgesSection = () => (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>Badges</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        {BADGES.map(badge => (
+          <View 
+            key={badge.id} 
+            style={[styles.badgeCard, !user && styles.badgeCardLocked]}
+          >
+            <Ionicons 
+              name={badge.icon} 
+              size={32} 
+              color={colors.primary}
+            />
+            <Text style={styles.badgeName}>{badge.name}</Text>
+            <Text style={styles.badgeDescription}>{badge.description}</Text>
+            {!user && (
+              <View style={styles.badgeLockOverlay}>
+                <Ionicons name="lock-closed" size={24} color={colors.text.secondary} />
+              </View>
+            )}
+          </View>
+        ))}
       </ScrollView>
-    </SafeAreaView>
+    </View>
+  );
+
+  const renderFeaturesList = () => (
+    <View style={styles.section}>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Fonctionnalités Premium</Text>
+      </View>
+      {!isPremium && (
+        <Pressable 
+          style={styles.premiumButton}
+          onPress={() => {/* Implement in-app purchase */}}
+        >
+          <Text style={styles.premiumButtonText}>Débloquer (0,99 €)</Text>
+        </Pressable>
+      )}
+      <View style={styles.featuresList}>
+        {[
+          { icon: 'star', text: 'Sauvegardez vos codes favoris', locked: !isPremium },
+          { icon: 'notifications', text: 'Recevez les nouveaux codes en priorité', locked: !isPremium },
+          { icon: 'trophy', text: 'Débloquez des badges exclusifs', locked: !isPremium },
+          { icon: 'color-palette', text: 'Thèmes personnalisés', locked: !isPremium },
+          { icon: 'bookmark', text: 'Collections illimitées', locked: !isPremium },
+        ].map((feature, index) => (
+          <View key={index} style={styles.featureItem}>
+            <Ionicons 
+              name={feature.icon} 
+              size={24} 
+              color={feature.locked ? colors.text.secondary : colors.primary} 
+            />
+            <Text style={[
+              styles.featureText,
+              feature.locked && styles.featureTextLocked
+            ]}>{feature.text}</Text>
+            {feature.locked && <Ionicons name="lock-closed" size={20} color={colors.text.secondary} />}
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+
+  const renderFavoritesPreview = () => (
+    <FavoritesPreview
+      likedCodes={likedCodes}
+      isPremium={isPremium}
+      maxFreeLimit={MAX_FREE_LIKES}
+    />
+  );
+
+  const sections = [
+    { title: 'profile', data: [null] },
+    { title: 'favorites', data: [null] },
+    { title: 'badges', data: [null] },
+    { title: 'features', data: [null] }
+  ];
+
+  const renderSection = ({ section }) => {
+    switch (section.title) {
+      case 'profile':
+        return renderProfileCard();
+      case 'favorites':
+        return renderFavoritesPreview();
+      case 'badges':
+        return renderBadgesSection();
+      case 'features':
+        return renderFeaturesList();
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <SectionList
+        sections={sections}
+        renderItem={renderSection}
+        renderSectionHeader={() => null}
+        stickySectionHeadersEnabled={false}
+        showsVerticalScrollIndicator={false}
+      />
+      <EditProfileModal
+        visible={editModalVisible}
+        onClose={() => setEditModalVisible(false)}
+        onSave={handleUpdateProfile}
+        currentUsername={user?.user_metadata?.full_name || ''}
+      />
+    </View>
   );
 }
 
@@ -124,96 +353,138 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background.primary,
   },
-  authSection: {
-    padding: spacing.lg,
-    alignItems: 'center',
+  scrollView: {
+    flex: 1,
   },
-  authTitle: {
-    color: colors.text.primary,
-    fontSize: typography.sizes.xl,
-    fontWeight: typography.weights.bold,
-    marginTop: spacing.md,
-  },
-  authSubtitle: {
-    color: colors.text.secondary,
-    fontSize: typography.sizes.md,
-    textAlign: 'center',
-    marginTop: spacing.xs,
-  },
-  authButtons: {
-    width: '100%',
-    gap: spacing.sm,
-    marginTop: spacing.lg,
-  },
-  primaryButton: {
-    backgroundColor: colors.primary,
-    padding: spacing.md,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  primaryButtonText: {
-    color: colors.text.dark,
-    fontWeight: typography.weights.semibold,
-    fontSize: typography.sizes.md,
-  },
-  secondaryButton: {
-    borderWidth: 1,
-    borderColor: colors.border.primary,
-    padding: spacing.md,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  secondaryButtonText: {
-    color: colors.text.primary,
-    fontWeight: typography.weights.semibold,
-    fontSize: typography.sizes.md,
+  scrollContent: {
+    paddingBottom: spacing.md,
   },
   section: {
-    padding: spacing.lg,
+    padding: spacing.md,
+  },
+  sectionHeader: {
+    marginBottom: spacing.sm,
   },
   sectionTitle: {
-    color: colors.text.primary,
     fontSize: typography.sizes.lg,
     fontWeight: typography.weights.bold,
+    color: colors.text.primary,
     marginBottom: spacing.md,
   },
-  favoriteCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  profileCard: {
+    margin: spacing.md,
     padding: spacing.md,
     backgroundColor: colors.background.secondary,
-    borderRadius: 12,
-    marginBottom: spacing.md,
+    borderRadius: borderRadius.md,
     borderWidth: 1,
     borderColor: colors.border.primary,
     ...shadows.small,
   },
-  favoriteTitle: {
-    color: colors.text.primary,
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.medium,
+  profileHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  avatarContainer: {
+    position: 'relative',
+  },
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 2,
+    borderColor: colors.primary,
+  },
+  editAvatarButton: {
+    position: 'absolute',
+    right: -4,
+    bottom: -4,
+    backgroundColor: colors.background.tertiary,
+    padding: spacing.xs,
+    borderRadius: borderRadius.full,
+    borderWidth: 2,
+    borderColor: colors.primary,
+  },
+  profileInfo: {
     marginLeft: spacing.md,
     flex: 1,
   },
-  favoriteCount: {
-    color: colors.text.secondary,
+  username: {
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.bold,
+    color: colors.text.primary,
+  },
+  editButton: {
+    marginTop: spacing.xs,
+  },
+  editButtonText: {
+    color: colors.primary,
     fontSize: typography.sizes.sm,
   },
-  emptyText: {
-    color: colors.text.secondary,
+  badgeCard: {
+    width: 120,
+    padding: spacing.md,
+    backgroundColor: colors.background.secondary,
+    borderRadius: borderRadius.md,
+    marginRight: spacing.md,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border.primary,
+  },
+  badgeCardLocked: {
+    opacity: 0.7,
+  },
+  badgeName: {
+    color: colors.text.primary,
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.semibold,
     textAlign: 'center',
+    marginTop: spacing.sm,
+  },
+  badgeDescription: {
+    color: colors.text.secondary,
+    fontSize: typography.sizes.xs,
+    textAlign: 'center',
+    marginTop: spacing.xs,
+  },
+  badgeLockOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: borderRadius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    backgroundColor: colors.background.secondary,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border.primary,
+  },
+  featureText: {
+    color: colors.text.primary,
     fontSize: typography.sizes.md,
+    marginLeft: spacing.md,
+    flex: 1,
+  },
+  featureTextLocked: {
+    color: colors.text.secondary,
   },
   appleButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.background.secondary,
+    justifyContent: 'center',
+    backgroundColor: colors.background.tertiary,
     padding: spacing.md,
     borderRadius: borderRadius.md,
-    gap: spacing.sm,
     marginTop: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.border.primary,
+    gap: spacing.sm,
   },
   appleButtonText: {
     color: colors.text.primary,
@@ -221,17 +492,64 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.semibold,
   },
   signOutButton: {
-    backgroundColor: colors.background.secondary,
+    backgroundColor: colors.background.tertiary,
     padding: spacing.md,
     borderRadius: borderRadius.md,
     marginTop: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.border.primary,
   },
   signOutButtonText: {
     color: colors.text.primary,
     fontSize: typography.sizes.md,
     fontWeight: typography.weights.semibold,
     textAlign: 'center',
+  },
+  premiumButton: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full,
+    alignSelf: 'flex-start',
+    marginBottom: spacing.md,
+  },
+  premiumButtonText: {
+    color: colors.text.dark,
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.semibold,
+  },
+  featuresList: {
+    gap: spacing.sm,
+  },
+  achievementCard: {
+    backgroundColor: colors.background.secondary,
+    borderRadius: borderRadius.md,
+    padding: spacing.xl,
+    marginBottom: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border.primary,
+    width: '100%',
+    minHeight: 140,
+    ...shadows.small,
+  },
+  achievementName: {
+    color: colors.text.primary,
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.semibold,
+    marginBottom: spacing.sm,
+    paddingRight: spacing.xl * 2,
+    width: '100%',
+  },
+  achievementsContainer: {
+    paddingHorizontal: 0,
+  },
+  premiumOverlay: {
+    position: 'absolute',
+    top: spacing.xl,
+    right: spacing.xl,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    backgroundColor: colors.background.tertiary,
+    padding: spacing.xs,
+    borderRadius: borderRadius.full,
   },
 }); 

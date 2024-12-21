@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
   filterButton: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    borderRadius: borderRadius.full,
+    borderRadius: borderRadius.sm,
     backgroundColor: colors.background.secondary,
     borderWidth: 1,
     borderColor: colors.border.primary,
