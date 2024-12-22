@@ -49,7 +49,7 @@ export function useLikes(cheatId: number) {
   };
 
   const setupRealtimeSubscription = () => {
-    const channel = supabase.channel(`public:likes:cheat_id_${cheatId}`)
+    return supabase.channel(`public:likes:cheat_id_${cheatId}`)
       .on(
         'postgres_changes',
         {
@@ -61,18 +61,18 @@ export function useLikes(cheatId: number) {
         () => fetchLikeStatus()
       )
       .subscribe();
-
-    return channel;
   };
 
   const toggleLike = async () => {
+    if (loading) return;
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) throw new Error('Must be authenticated to like');
 
       setLoading(true);
+      const currentIsLiked = isLiked;
 
-      if (isLiked) {
+      if (currentIsLiked) {
         const { error: deleteError } = await supabase
           .from('likes')
           .delete()

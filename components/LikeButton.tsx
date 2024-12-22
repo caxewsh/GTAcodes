@@ -61,6 +61,9 @@ export function LikeButton({
         style={styles.container}
         onPress={handlePress}
         disabled={loading}
+        accessibilityRole="button"
+        accessibilityLabel={isLiked ? "Unlike this cheat" : "Like this cheat"}
+        accessibilityState={{ checked: isLiked }}
       >
         <Ionicons 
           name={isLiked ? "heart" : "heart-outline"} 

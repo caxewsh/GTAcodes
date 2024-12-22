@@ -62,7 +62,8 @@ export function useLikedCheats() {
 
       const transformedData = data
         .map(item => item.Cheats)
-        .filter((cheat): cheat is LikedCheat => cheat !== null);
+        .filter((cheat: any): cheat is LikedCheat => cheat !== null)
+        .flat();
 
       setLikedCheats(transformedData);
     } catch (error) {
@@ -73,7 +74,14 @@ export function useLikedCheats() {
   };
 
   const setupRealtimeSubscription = () => {
-    const channel = supabase.channel('liked_cheats_changes')
+    const channelName = 'liked_cheats_changes';
+    const existingChannel = supabase.getChannels().find(ch => ch.topic === channelName);
+    
+    if (existingChannel) {
+      return existingChannel;
+    }
+    
+    const channel = supabase.channel(channelName)
       .on(
         'postgres_changes',
         {
