@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography, borderRadius } from '../constants/theme';
 
@@ -9,7 +9,7 @@ export default function LikesLimitTooltip() {
   return (
     <View style={styles.container}>
       <Pressable 
-        onPress={() => setShowTooltip(!showTooltip)}
+        onPress={() => setShowTooltip(true)}
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       >
         <Ionicons 
@@ -19,20 +19,32 @@ export default function LikesLimitTooltip() {
         />
       </Pressable>
       
-      {showTooltip && (
-        <View style={styles.tooltip}>
-          <Text style={styles.tooltipText}>
-            Version gratuite limitée à 10 favoris.{'\n'}
-            Passez en premium pour en sauvegarder plus !
-          </Text>
-          <Pressable 
-            style={styles.closeButton}
-            onPress={() => setShowTooltip(false)}
-          >
-            <Text style={styles.closeText}>OK</Text>
-          </Pressable>
-        </View>
-      )}
+      <Modal
+        visible={showTooltip}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowTooltip(false)}
+      >
+        <Pressable 
+          style={styles.modalContainer}
+          onPress={() => setShowTooltip(false)}
+        >
+          <View style={styles.tooltipWrapper}>
+            <View style={styles.tooltip}>
+              <Text style={styles.tooltipText}>
+                Version gratuite limitée à 10 favoris.{'\n'}
+                Passez en premium pour en sauvegarder plus !
+              </Text>
+              <Pressable 
+                style={styles.closeButton}
+                onPress={() => setShowTooltip(false)}
+              >
+                <Text style={styles.closeText}>OK</Text>
+              </Pressable>
+            </View>
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -42,10 +54,16 @@ const styles = StyleSheet.create({
     position: 'relative',
     padding: spacing.xs,
   },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  tooltipWrapper: {
+    padding: spacing.md,
+  },
   tooltip: {
-    position: 'absolute',
-    top: '100%',
-    right: 0,
     backgroundColor: colors.background.secondary,
     padding: spacing.sm,
     borderRadius: borderRadius.sm,
@@ -58,8 +76,6 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    marginTop: spacing.xs,
-    zIndex: 1000,
   },
   tooltipText: {
     color: colors.text.secondary,
@@ -69,6 +85,7 @@ const styles = StyleSheet.create({
   closeButton: {
     marginTop: spacing.sm,
     alignItems: 'center',
+    paddingVertical: spacing.xs,
   },
   closeText: {
     color: colors.primary,

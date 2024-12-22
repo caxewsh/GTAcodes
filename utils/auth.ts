@@ -10,16 +10,30 @@ export async function signInWithApple() {
       ],
     });
 
+    // If user cancelled, credential will be null
+    if (!credential) {
+      return null;
+    }
+
     // Sign in with Supabase using the Apple credential
     const { data, error } = await supabase.auth.signInWithIdToken({
       provider: 'apple',
-      token: credential.identityToken!,
+      token: credential.identityToken,
     });
 
     if (error) throw error;
     return data;
 
   } catch (error) {
+    // Handle various cancellation messages
+    if (
+      error.code === 'ERR_CANCELED' || 
+      error.message === 'The user canceled the authorization attempt' ||
+      error.message?.includes('canceled') ||
+      error.message?.includes('cancelled')
+    ) {
+      return null;
+    }
     console.error('Error signing in with Apple:', error);
     throw error;
   }

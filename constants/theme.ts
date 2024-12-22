@@ -1,5 +1,12 @@
 export const colors = {
   primary: '#adc178',
+  premium: {
+    favorite: '#FFD700',    // Gold
+    notification: '#FF6B6B', // Coral red
+    badge: '#4CAF50',       // Green
+    theme: '#9C27B0',       // Purple
+    collection: '#2196F3',  // Blue
+  },
   background: {
     primary: '#1C1C1E',
     secondary: '#2C2C2E',

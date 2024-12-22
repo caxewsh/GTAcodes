@@ -7,9 +7,11 @@ import { signInWithApple, signOut, getCurrentUser } from '../../utils/auth';
 import * as Haptics from 'expo-haptics';
 import EditProfileModal from '../../components/EditProfileModal';
 import { supabase } from '../../utils/supabase';
-import FavoritesList from '../../components/FavoritesList';
 import { useLikedCodes } from '../../hooks/useLikedCodes';
 import FavoritesPreview from '../../components/FavoritesPreview';
+import { FavoriteItem } from '../../components/FavoritesList';
+
+type IconName = keyof typeof Ionicons.glyphMap;
 
 const BADGES = [
   { 
@@ -82,12 +84,17 @@ const BADGES = [
   },
 ];
 
+interface Section {
+  title: string;
+  data: any[];
+}
+
 export default function ProfilScreen() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
-  const [favorites, setFavorites] = useState([]);
+  const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
   const MAX_FREE_FAVORITES = 10;
   const { likedCodes } = useLikedCodes();
   const MAX_FREE_LIKES = 10;
@@ -96,25 +103,38 @@ export default function ProfilScreen() {
     checkUser();
   }, []);
 
-  async function checkUser() {
+  const checkUser = async () => {
     try {
       const currentUser = await getCurrentUser();
       setUser(currentUser);
     } catch (error) {
       console.log('Error checking user:', error);
+      // Don't show alert here as it might be annoying on app launch
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   const handleSignIn = async () => {
     try {
       Haptics.selectionAsync();
-      await signInWithApple();
-      checkUser();
-    } catch (error) {
-      console.error('Error signing in:', error);
-      Alert.alert('Erreur', "Impossible de se connecter avec Apple");
+      const data = await signInWithApple();
+      
+      // If sign in was cancelled or failed, data will be null
+      if (!data) {
+        // Don't log anything for cancellation
+        return;
+      }
+      
+      await checkUser();
+    } catch (error: any) {
+      if (error.message !== 'The user canceled the authorization attempt') {
+        console.error('Error signing in:', error);
+        Alert.alert(
+          'Erreur de connexion',
+          "Impossible de se connecter avec Apple. Veuillez réessayer."
+        );
+      }
     }
   };
 
@@ -209,31 +229,6 @@ export default function ProfilScreen() {
     </View>
   );
 
-  const renderFavoritesSection = () => (
-    <View style={styles.section}>
-      <FavoritesList
-        favorites={favorites}
-        isPremium={isPremium}
-        maxFreeLimit={MAX_FREE_FAVORITES}
-        onRemoveFavorite={handleRemoveFavorite}
-        onPremiumPrompt={() => {
-          // Show premium upgrade prompt
-          Alert.alert(
-            'Limite atteinte',
-            'Passez à la version premium pour sauvegarder plus de favoris !',
-            [
-              { text: 'Plus tard' },
-              { 
-                text: 'Débloquer (0,99 €)', 
-                onPress: () => {/* Implement purchase */} 
-              }
-            ]
-          );
-        }}
-      />
-    </View>
-  );
-
   const renderBadgesSection = () => (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Badges</Text>
@@ -244,7 +239,7 @@ export default function ProfilScreen() {
             style={[styles.badgeCard, !user && styles.badgeCardLocked]}
           >
             <Ionicons 
-              name={badge.icon} 
+              name={badge.icon as keyof typeof Ionicons.glyphMap} 
               size={32} 
               color={colors.primary}
             />
@@ -276,17 +271,43 @@ export default function ProfilScreen() {
       )}
       <View style={styles.featuresList}>
         {[
-          { icon: 'star', text: 'Sauvegardez vos codes favoris', locked: !isPremium },
-          { icon: 'notifications', text: 'Recevez les nouveaux codes en priorité', locked: !isPremium },
-          { icon: 'trophy', text: 'Débloquez des badges exclusifs', locked: !isPremium },
-          { icon: 'color-palette', text: 'Thèmes personnalisés', locked: !isPremium },
-          { icon: 'bookmark', text: 'Collections illimitées', locked: !isPremium },
+          { 
+            icon: 'star' as IconName, 
+            text: 'Favoris illimités', 
+            locked: !isPremium,
+            color: colors.premium.favorite
+          },
+          { 
+            icon: 'notifications' as IconName, 
+            text: 'Alertes de nouveaux codes', 
+            locked: !isPremium,
+            color: colors.premium.notification
+          },
+          { 
+            icon: 'trophy' as IconName, 
+            text: 'Débloquez des badges exclusifs', 
+            locked: !isPremium,
+            color: colors.premium.badge
+          },
+          { 
+            icon: 'color-palette' as IconName, 
+            text: 'Thèmes personnalisés', 
+            locked: !isPremium,
+            color: colors.premium.theme
+          },
+          { 
+            icon: 'bookmark' as IconName, 
+            text: 'Collections illimitées', 
+            locked: !isPremium,
+            color: colors.premium.collection
+          },
         ].map((feature, index) => (
           <View key={index} style={styles.featureItem}>
             <Ionicons 
               name={feature.icon} 
               size={24} 
-              color={feature.locked ? colors.text.secondary : colors.primary} 
+              color={feature.color}
+              style={{ opacity: feature.locked ? 0.5 : 1 }}
             />
             <Text style={[
               styles.featureText,
@@ -314,7 +335,7 @@ export default function ProfilScreen() {
     { title: 'features', data: [null] }
   ];
 
-  const renderSection = ({ section }) => {
+  const renderSection = ({ section }: { section: Section }) => {
     switch (section.title) {
       case 'profile':
         return renderProfileCard();

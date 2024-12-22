@@ -60,6 +60,10 @@ export default function EditProfileModal({ visible, onClose, onSave, currentUser
                 onChangeText={setUsername}
                 placeholder="Entrez votre nom d'utilisateur"
                 placeholderTextColor={colors.text.secondary}
+                autoCapitalize="none"
+                autoCorrect={false}
+                maxLength={20}
+                textContentType="username"
               />
             </View>
 

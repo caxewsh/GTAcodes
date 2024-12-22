@@ -3,8 +3,15 @@ import { View, Text, Pressable, StyleSheet, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography, borderRadius, shadows } from '../constants/theme';
 
+export interface FavoriteItem {
+  id: string;
+  title: string;
+  code: string;
+  game: string;
+}
+
 interface FavoritesListProps {
-  favorites: any[];
+  favorites: FavoriteItem[];
   isPremium: boolean;
   maxFreeLimit: number;
   onRemoveFavorite: (id: string) => void;
@@ -20,7 +27,7 @@ export default function FavoritesList({
 }: FavoritesListProps) {
   const isOverLimit = !isPremium && favorites.length >= maxFreeLimit;
 
-  const renderFavoriteItem = ({ item }: { item: any }) => (
+  const renderFavoriteItem = ({ item }: { item: FavoriteItem }) => (
     <View style={styles.favoriteCard}>
       <View style={styles.favoriteInfo}>
         <Text style={styles.favoriteTitle}>{item.title}</Text>
