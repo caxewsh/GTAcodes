@@ -2,20 +2,20 @@ import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useLikedCheats } from '../hooks/useLikedCheats';
 import { colors, spacing, typography, borderRadius, shadows } from '../constants/theme';
 
 interface FavoritesPreviewProps {
-  likedCodes: any[];
   isPremium: boolean;
   maxFreeLimit: number;
 }
 
 export default function FavoritesPreview({ 
-  likedCodes, 
   isPremium, 
   maxFreeLimit 
 }: FavoritesPreviewProps) {
   const router = useRouter();
+  const { likedCheats } = useLikedCheats();
 
   return (
     <View style={styles.container}>
@@ -23,7 +23,7 @@ export default function FavoritesPreview({
         <View style={styles.titleContainer}>
           <Text style={styles.title}>Mes Favoris</Text>
           <Text style={styles.count}>
-            {likedCodes.length}{!isPremium && `/${maxFreeLimit}`}
+            {likedCheats.length}{!isPremium && `/${maxFreeLimit}`}
           </Text>
         </View>
         <Pressable 
@@ -35,19 +35,19 @@ export default function FavoritesPreview({
         </Pressable>
       </View>
 
-      {likedCodes.length > 0 ? (
+      {likedCheats.length > 0 ? (
         <View style={styles.preview}>
-          {likedCodes.slice(0, 3).map((code, index) => (
-            <View key={code.id} style={styles.codeItem}>
+          {likedCheats.slice(0, 3).map((cheat) => (
+            <View key={cheat.id} style={styles.codeItem}>
               <Text style={styles.codeName} numberOfLines={1}>
-                {code.title}
+                {cheat.cheatName}
               </Text>
-              <Text style={styles.gameText}>{code.game}</Text>
+              <Text style={styles.gameText}>{cheat.game}</Text>
             </View>
           ))}
-          {likedCodes.length > 3 && (
+          {likedCheats.length > 3 && (
             <Text style={styles.moreText}>
-              +{likedCodes.length - 3} autres codes
+              +{likedCheats.length - 3} autres codes
             </Text>
           )}
         </View>
