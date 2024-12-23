@@ -15,7 +15,8 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.axe.l.r.GTAcodes"
+      "bundleIdentifier": "com.axe.l.r.GTAcodes",
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
@@ -33,7 +34,8 @@
     },
     "owner": "axe.l.r",
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-apple-authentication"
     ]
   }
 }

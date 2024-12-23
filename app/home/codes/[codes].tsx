@@ -1,30 +1,69 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, ScrollView, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { supabase } from '../../../utils/supabase';
 import CheatFilters from '../../../components/CheatFilters';
+import { colors, spacing, typography, borderRadius, shadows } from '../../../constants/theme';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Haptics from 'expo-haptics';
+import LikesLimitTooltip from '../../../components/LikesLimitTooltip';
+import { useLikedCodes } from '../../../hooks/useLikedCodes';
+import { LikeButton } from '../../../components/LikeButton';
 
 interface CheatCode {
+  id: number;
   cheatName: string;
   cheatCode: string;
   cheatCategory: string;
 }
 
-const GameCheatScreen = () => {
+const MAX_FREE_LIKES = 10;
+const isPremium = false; // We'll replace this with real premium check later
+
+export default function GameCheatScreen() {
   const { game, platform } = useLocalSearchParams();
   const navigation = useNavigation();
   const [cheats, setCheats] = useState<CheatCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const { likedCodes, addLikedCode, removeLikedCode, isCodeLiked, initializeLikedCodes } = useLikedCodes();
+  const [likingInProgress, setLikingInProgress] = useState<string | null>(null);
+
+  React.useLayoutEffect(() => {
+    if (game && navigation) {
+      navigation.setOptions({
+        headerTitle: `Codes ${game}`,
+        headerBackTitle: 'Retour',
+        headerRight: () => (
+          <View style={styles.headerRight}>
+            <Ionicons 
+              name="heart" 
+              size={20} 
+              color={colors.primary} 
+            />
+            <Text style={styles.likesCount}>
+              {likedCodes.length}{!isPremium && `/${MAX_FREE_LIKES}`}
+            </Text>
+            <LikesLimitTooltip />
+          </View>
+        ),
+      });
+    }
+  }, [game, navigation, likedCodes.length]);
+
+  const filteredCheats = selectedCategory
+    ? cheats.filter(cheat => cheat.cheatCategory === selectedCategory)
+    : cheats;
 
   useEffect(() => {
     const fetchCheats = async () => {
       setLoading(true);
       try {
         const { data, error } = await supabase
-          .from('CheatsGTA5V2')
-          .select('cheatName, cheatCode, cheatCategory')
+          .from('Cheats')
+          .select('id, cheatName, cheatCode, cheatCategory')
           .eq('game', game)
           .eq('platform', platform);
 
@@ -44,31 +83,16 @@ const GameCheatScreen = () => {
     };
 
     fetchCheats();
-  }, [game]);
+  }, [game, platform]);
 
-  const filteredCheats = selectedCategory
-    ? cheats.filter(cheat => cheat.cheatCategory === selectedCategory)
-    : cheats;
-
-  React.useLayoutEffect(() => {
-    if (game && navigation) {
-      navigation.setOptions({
-        headerTitle: `Cheats for ${game}`,
-        headerTintColor: '#E5F993',
-        headerBackTitleVisible: false,
-        headerStyle: {
-          backgroundColor: '#000',
-          borderBottomColor: '#333',
-          borderBottomWidth: 1,
-        },
-      });
-    }
-  }, [navigation, game]);
+  useEffect(() => {
+    initializeLikedCodes();
+  }, []);
 
   if (loading) {
     return (
       <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#E5F993" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -80,12 +104,40 @@ const GameCheatScreen = () => {
         selectedCategory={selectedCategory}
         onSelectCategory={setSelectedCategory}
       />
-      <ScrollView contentContainerStyle={styles.scrollViewContainer}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollViewContainer}
+        showsVerticalScrollIndicator={false}
+      >
         {filteredCheats.length > 0 ? (
-          filteredCheats.map((item, index) => (
-            <View key={`${item.cheatName}-${index}`} style={styles.card}>
-              <View style={styles.cheatCategoryTag}>
-                <Text style={styles.cheatCategoryText}>{item.cheatCategory.toUpperCase()}</Text>
+          filteredCheats.map((item) => (
+            <View key={`cheat-${item.id}`} style={styles.card}>
+              <View style={styles.cardHeader}>
+                <View style={styles.cheatCategoryTag}>
+                  <Text style={styles.cheatCategoryText}>
+                    {item.cheatCategory.toUpperCase()}
+                  </Text>
+                </View>
+                <LikeButton 
+                  cheatId={item.id}
+                  isPremium={isPremium}
+                  maxFreeLikes={MAX_FREE_LIKES}
+                  onPremiumRequired={() => {
+                    Alert.alert(
+                      'Limite atteinte',
+                      'Passez à la version premium pour sauvegarder plus de favoris !',
+                      [
+                        { text: 'Plus tard' },
+                        { 
+                          text: 'Débloquer (0,99 €)', 
+                          onPress: () => {
+                            // TODO: Implement premium purchase
+                            console.log('Premium purchase clicked');
+                          } 
+                        }
+                      ]
+                    );
+                  }}
+                />
               </View>
               <Text style={styles.cheatName}>{item.cheatName}</Text>
               <Text style={styles.cheatCode}>{item.cheatCode}</Text>
@@ -93,73 +145,95 @@ const GameCheatScreen = () => {
           ))
         ) : (
           <Text style={styles.noDataText}>
-            No cheats available for {selectedCategory ? `${selectedCategory} category in ` : ''}{game}.
+            Aucun code disponible pour {selectedCategory ? `la catégorie ${selectedCategory} dans ` : ''}{game}.
           </Text>
         )}
       </ScrollView>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
-    padding: 10,
+    backgroundColor: colors.background.primary,
   },
   loaderContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#000',
+    backgroundColor: colors.background.primary,
   },
   scrollViewContainer: {
-    paddingVertical: 10,
-    paddingBottom: 80,
+    padding: spacing.md,
+    paddingBottom: spacing.xl,
+    gap: spacing.md,
   },
   card: {
-    backgroundColor: '#1e1e1e',
-    padding: 15,
-    marginVertical: 10,
-    borderRadius: 10,
-    borderColor: '#333',
+    backgroundColor: colors.background.secondary,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
     borderWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.8,
-    shadowRadius: 2,
-    elevation: 5,
+    borderColor: colors.border.primary,
+    ...shadows.small,
   },
   cheatCategoryTag: {
-    backgroundColor: '#E5F993',
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    alignSelf: 'flex-start', // Make sure the tag doesn't stretch
-    marginBottom: 8,
+    backgroundColor: colors.primary,
+    alignSelf: 'flex-start',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+    marginBottom: spacing.sm,
   },
   cheatCategoryText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#222', // Darker color for a good contrast with the tag background
+    color: colors.text.dark,
+    fontSize: typography.sizes.xs,
+    fontWeight: typography.weights.semibold,
   },
   cheatName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 5,
+    color: colors.text.primary,
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.semibold,
+    marginBottom: spacing.xs,
   },
   cheatCode: {
-    fontSize: 16,
-    color: '#ddd',
-    fontStyle: 'italic',
+    color: colors.text.secondary,
+    fontSize: typography.sizes.md,
+    fontFamily: 'monospace',
   },
   noDataText: {
-    fontSize: 16,
-    color: '#bbb',
+    color: colors.text.secondary,
+    fontSize: typography.sizes.md,
     textAlign: 'center',
-    marginTop: 20,
+    marginTop: spacing.xl,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: spacing.sm,
+  },
+  likeContainer: {
+    position: 'relative',
+    alignItems: 'center',
+    padding: spacing.xs,
+    minWidth: 50,
+  },
+  likeCount: {
+    fontSize: typography.sizes.xs,
+    color: colors.text.secondary,
+    marginTop: 2,
+  },
+  likeCountActive: {
+    color: colors.primary,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  likesCount: {
+    fontSize: typography.sizes.xs,
+    color: colors.text.secondary,
   },
 });
-
-export default GameCheatScreen;
