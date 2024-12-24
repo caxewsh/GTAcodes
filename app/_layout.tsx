@@ -2,8 +2,11 @@ import { Tabs } from 'expo-router';
 import { colors } from '../constants/theme';
 import { BlurView } from 'expo-blur';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { useInitializeLikes } from '../hooks/useInitializeLikes';
 
 export default function AppLayout() {
+  useInitializeLikes(); // Initialize likes store at app root
+  
   return (
     <Tabs
       screenOptions={{

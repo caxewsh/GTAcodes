@@ -6,6 +6,12 @@ import { supabase } from '../utils/supabase';
 import { useLikes } from '../hooks/useLikes';
 import { colors, spacing, typography } from '../constants/theme';
 import * as Haptics from 'expo-haptics';
+import Animated, { 
+  useAnimatedStyle, 
+  withSpring, 
+  withSequence,
+  useSharedValue
+} from 'react-native-reanimated';
 
 type Props = {
   cheatId: number;
@@ -22,6 +28,11 @@ export function LikeButton({
 }: Props) {
   const router = useRouter();
   const { isLiked, likesCount, loading, toggleLike } = useLikes(cheatId);
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }]
+  }));
 
   const handlePress = async () => {
     try {
@@ -42,14 +53,20 @@ export function LikeButton({
         return;
       }
 
-      if (!isPremium && likesCount >= maxFreeLikes) {
+      await Haptics.selectionAsync();
+      
+      // Animate the heart
+      scale.value = withSequence(
+        withSpring(1.2, { damping: 2 }),
+        withSpring(1, { damping: 3 })
+      );
+      
+      await toggleLike();
+    } catch (error) {
+      if (error instanceof Error && error.message === 'FREE_LIMIT_REACHED') {
         onPremiumRequired?.();
         return;
       }
-
-      await Haptics.selectionAsync();
-      await toggleLike();
-    } catch (error) {
       console.error('Error handling like:', error);
       Alert.alert('Erreur', 'Impossible de sauvegarder le like');
     }
@@ -65,11 +82,13 @@ export function LikeButton({
         accessibilityLabel={isLiked ? "Unlike this cheat" : "Like this cheat"}
         accessibilityState={{ checked: isLiked }}
       >
-        <Ionicons 
-          name={isLiked ? "heart" : "heart-outline"} 
-          size={24} 
-          color={isLiked ? colors.primary : colors.text.secondary} 
-        />
+        <Animated.View style={animatedStyle}>
+          <Ionicons 
+            name={isLiked ? "heart" : "heart-outline"} 
+            size={24} 
+            color={isLiked ? colors.primary : colors.text.secondary} 
+          />
+        </Animated.View>
       </Pressable>
       {likesCount > 0 && (
         <Text style={[

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography, borderRadius } from '../constants/theme';
+import { PREMIUM_LIMITS } from '../constants/premium';
 
 export default function LikesLimitTooltip() {
   const [showTooltip, setShowTooltip] = useState(false);
@@ -32,7 +33,7 @@ export default function LikesLimitTooltip() {
           <View style={styles.tooltipWrapper}>
             <View style={styles.tooltip}>
               <Text style={styles.tooltipText}>
-                Version gratuite limitée à 10 favoris.{'\n'}
+                Version gratuite limitée à {PREMIUM_LIMITS.FREE.LIKES} favoris.{'\n\n'}
                 Passez en premium pour en sauvegarder plus !
               </Text>
               <Pressable 

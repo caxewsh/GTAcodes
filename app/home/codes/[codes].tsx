@@ -10,6 +10,9 @@ import * as Haptics from 'expo-haptics';
 import LikesLimitTooltip from '../../../components/LikesLimitTooltip';
 import { useLikedCodes } from '../../../hooks/useLikedCodes';
 import { LikeButton } from '../../../components/LikeButton';
+import { PREMIUM_LIMITS } from '../../../constants/premium';
+import { useLikedCheats } from '../../../hooks/useLikedCheats';
+import { useLikesStore } from '../../../stores/likesStore';
 
 interface CheatCode {
   id: number;
@@ -21,6 +24,24 @@ interface CheatCode {
 const MAX_FREE_LIKES = 10;
 const isPremium = false; // We'll replace this with real premium check later
 
+function HeaderRight() {
+  const likesCount = useLikesStore((state) => state.likesCount);
+  
+  return (
+    <View style={styles.headerRight}>
+      <Ionicons 
+        name="heart" 
+        size={20} 
+        color={colors.primary} 
+      />
+      <Text style={styles.likesCount}>
+        {likesCount}{!isPremium && `/${PREMIUM_LIMITS.FREE.LIKES}`}
+      </Text>
+      <LikesLimitTooltip />
+    </View>
+  );
+}
+
 export default function GameCheatScreen() {
   const { game, platform } = useLocalSearchParams();
   const navigation = useNavigation();
@@ -30,28 +51,17 @@ export default function GameCheatScreen() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const { likedCodes, addLikedCode, removeLikedCode, isCodeLiked, initializeLikedCodes } = useLikedCodes();
   const [likingInProgress, setLikingInProgress] = useState<string | null>(null);
+  const { likedCheats } = useLikedCheats();
 
   React.useLayoutEffect(() => {
     if (game && navigation) {
       navigation.setOptions({
         headerTitle: `Codes ${game}`,
         headerBackTitle: 'Retour',
-        headerRight: () => (
-          <View style={styles.headerRight}>
-            <Ionicons 
-              name="heart" 
-              size={20} 
-              color={colors.primary} 
-            />
-            <Text style={styles.likesCount}>
-              {likedCodes.length}{!isPremium && `/${MAX_FREE_LIKES}`}
-            </Text>
-            <LikesLimitTooltip />
-          </View>
-        ),
+        headerRight: () => <HeaderRight />
       });
     }
-  }, [game, navigation, likedCodes.length]);
+  }, [game, navigation]);
 
   const filteredCheats = selectedCategory
     ? cheats.filter(cheat => cheat.cheatCategory === selectedCategory)
