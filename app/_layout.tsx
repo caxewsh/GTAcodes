@@ -1,11 +1,10 @@
 import { Tabs } from 'expo-router';
 import { colors } from '../constants/theme';
-import { BlurView } from 'expo-blur';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useInitializeLikes } from '../hooks/useInitializeLikes';
 
 export default function AppLayout() {
-  useInitializeLikes(); // Initialize likes store at app root
+  useInitializeLikes();
   
   return (
     <Tabs
@@ -36,6 +35,13 @@ export default function AppLayout() {
         options={{
           title: 'Accueil',
           tabBarIcon: ({ color }) => <FontAwesome size={28} name="home" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="news"
+        options={{
+          title: 'Actualités',
+          tabBarIcon: ({ color }) => <FontAwesome size={28} name="newspaper-o" color={color} />,
         }}
       />
       <Tabs.Screen
