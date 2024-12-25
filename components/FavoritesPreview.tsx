@@ -2,20 +2,17 @@ import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useLikedCheats } from '../hooks/useLikedCheats';
+import { useLikesStore } from '../stores/likesStore';
+import { PREMIUM_LIMITS } from '../constants/premium';
 import { colors, spacing, typography, borderRadius, shadows } from '../constants/theme';
 
 interface FavoritesPreviewProps {
   isPremium: boolean;
-  maxFreeLimit: number;
 }
 
-export default function FavoritesPreview({ 
-  isPremium, 
-  maxFreeLimit 
-}: FavoritesPreviewProps) {
+export default function FavoritesPreview({ isPremium }: FavoritesPreviewProps) {
   const router = useRouter();
-  const { likedCheats } = useLikedCheats();
+  const { likesCount, likedCheats } = useLikesStore();
 
   return (
     <View style={styles.container}>
@@ -23,11 +20,11 @@ export default function FavoritesPreview({
         <View style={styles.titleContainer}>
           <Text style={styles.title}>Mes Favoris</Text>
           <Text style={styles.count}>
-            {likedCheats.length}{!isPremium && `/${maxFreeLimit}`}
+            {likesCount}{!isPremium && `/${PREMIUM_LIMITS.FREE.LIKES}`}
           </Text>
         </View>
         <Pressable 
-          onPress={() => router.push('/playlist')}
+          onPress={() => router.push('/profil/favorites')}
           style={styles.viewAllButton}
         >
           <Text style={styles.viewAllText}>Voir tout</Text>

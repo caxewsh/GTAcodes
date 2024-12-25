@@ -14,25 +14,6 @@ export function useLikedCheats() {
   const [likedCheats, setLikedCheats] = useState<LikedCheat[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchLikedCheats();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN') {
-        fetchLikedCheats();
-      } else if (event === 'SIGNED_OUT') {
-        setLikedCheats([]);
-      }
-    });
-
-    const channel = setupRealtimeSubscription();
-    
-    return () => {
-      subscription.unsubscribe();
-      channel.unsubscribe();
-    };
-  }, []);
-
   const fetchLikedCheats = async () => {
     try {
       setLoading(true);
@@ -73,15 +54,19 @@ export function useLikedCheats() {
     }
   };
 
-  const setupRealtimeSubscription = () => {
-    const channelName = 'liked_cheats_changes';
-    const existingChannel = supabase.getChannels().find(ch => ch.topic === channelName);
-    
-    if (existingChannel) {
-      return existingChannel;
-    }
-    
-    const channel = supabase.channel(channelName)
+  useEffect(() => {
+    fetchLikedCheats();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN') {
+        fetchLikedCheats();
+      } else if (event === 'SIGNED_OUT') {
+        setLikedCheats([]);
+      }
+    });
+
+    // Subscribe to ALL changes in the likes table for the current user
+    const channel = supabase.channel('likes_changes')
       .on(
         'postgres_changes',
         {
@@ -92,9 +77,12 @@ export function useLikedCheats() {
         () => fetchLikedCheats()
       )
       .subscribe();
-
-    return channel;
-  };
+    
+    return () => {
+      subscription.unsubscribe();
+      channel.unsubscribe();
+    };
+  }, []);
 
   return {
     likedCheats,

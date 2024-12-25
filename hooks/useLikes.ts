@@ -1,10 +1,15 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabase';
+import { PREMIUM_LIMITS } from '../constants/premium';
+import { useLikedCheats } from './useLikedCheats';
+import { useLikesStore } from '../stores/likesStore';
 
 export function useLikes(cheatId: number) {
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const { likedCheats, refresh: refreshLikedCheats } = useLikedCheats();
+  const { initialize } = useLikesStore();
 
   useEffect(() => {
     fetchLikeStatus();
@@ -69,10 +74,15 @@ export function useLikes(cheatId: number) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) throw new Error('Must be authenticated to like');
 
-      setLoading(true);
-      const currentIsLiked = isLiked;
+      await refreshLikedCheats();
 
-      if (currentIsLiked) {
+      if (!isLiked && likedCheats.length >= PREMIUM_LIMITS.FREE.LIKES) {
+        throw new Error('FREE_LIMIT_REACHED');
+      }
+
+      setLoading(true);
+
+      if (isLiked) {
         const { error: deleteError } = await supabase
           .from('likes')
           .delete()
@@ -83,6 +93,15 @@ export function useLikes(cheatId: number) {
 
         if (deleteError) throw deleteError;
       } else {
+        const { count } = await supabase
+          .from('likes')
+          .select('*', { count: 'exact' })
+          .eq('user_id', session.user.id);
+
+        if ((count ?? 0) >= PREMIUM_LIMITS.FREE.LIKES) {
+          throw new Error('FREE_LIMIT_REACHED');
+        }
+
         const { error: insertError } = await supabase
           .from('likes')
           .insert({
@@ -94,7 +113,12 @@ export function useLikes(cheatId: number) {
       }
 
       await fetchLikeStatus();
+      await refreshLikedCheats();
+      await initialize();
     } catch (error) {
+      if (error instanceof Error && error.message === 'FREE_LIMIT_REACHED') {
+        throw error;
+      }
       console.error('Error in toggleLike:', error);
       throw error;
     } finally {

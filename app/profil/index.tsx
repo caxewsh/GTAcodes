@@ -321,11 +321,7 @@ export default function ProfilScreen() {
   );
 
   const renderFavoritesPreview = () => (
-    <FavoritesPreview
-      likedCodes={likedCodes}
-      isPremium={isPremium}
-      maxFreeLimit={MAX_FREE_LIKES}
-    />
+    <FavoritesPreview isPremium={isPremium} />
   );
 
   const sections = [
