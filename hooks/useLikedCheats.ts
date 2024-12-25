@@ -74,10 +74,7 @@ export function useLikedCheats() {
           schema: 'public',
           table: 'likes'
         },
-        () => {
-          console.log('Likes changed, refreshing...');
-          fetchLikedCheats();
-        }
+        () => fetchLikedCheats()
       )
       .subscribe();
     

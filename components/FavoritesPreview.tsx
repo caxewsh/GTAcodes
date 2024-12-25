@@ -24,7 +24,7 @@ export default function FavoritesPreview({ isPremium }: FavoritesPreviewProps) {
           </Text>
         </View>
         <Pressable 
-          onPress={() => router.push('/playlist')}
+          onPress={() => router.push('/profil/favorites')}
           style={styles.viewAllButton}
         >
           <Text style={styles.viewAllText}>Voir tout</Text>

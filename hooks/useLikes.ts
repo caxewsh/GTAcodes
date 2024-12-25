@@ -75,13 +75,8 @@ export function useLikes(cheatId: number) {
       if (!session?.user) throw new Error('Must be authenticated to like');
 
       await refreshLikedCheats();
-      
-      console.log('Current likes count:', likedCheats.length);
-      console.log('Free limit:', PREMIUM_LIMITS.FREE.LIKES);
-      console.log('Is already liked:', isLiked);
 
       if (!isLiked && likedCheats.length >= PREMIUM_LIMITS.FREE.LIKES) {
-        console.log('Should throw FREE_LIMIT_REACHED');
         throw new Error('FREE_LIMIT_REACHED');
       }
 
@@ -103,7 +98,7 @@ export function useLikes(cheatId: number) {
           .select('*', { count: 'exact' })
           .eq('user_id', session.user.id);
 
-        if (count >= PREMIUM_LIMITS.FREE.LIKES) {
+        if ((count ?? 0) >= PREMIUM_LIMITS.FREE.LIKES) {
           throw new Error('FREE_LIMIT_REACHED');
         }
 
@@ -122,7 +117,6 @@ export function useLikes(cheatId: number) {
       await initialize();
     } catch (error) {
       if (error instanceof Error && error.message === 'FREE_LIMIT_REACHED') {
-        console.log('Throwing FREE_LIMIT_REACHED error');
         throw error;
       }
       console.error('Error in toggleLike:', error);
