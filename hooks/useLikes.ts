@@ -3,6 +3,7 @@ import { supabase } from '../utils/supabase';
 import { PREMIUM_LIMITS } from '../constants/premium';
 import { useLikedCheats } from './useLikedCheats';
 import { useLikesStore } from '../stores/likesStore';
+import { useBadges } from './useBadges';
 
 export function useLikes(cheatId: number) {
   const [isLiked, setIsLiked] = useState(false);
@@ -10,6 +11,7 @@ export function useLikes(cheatId: number) {
   const [loading, setLoading] = useState(true);
   const { likedCheats, refresh: refreshLikedCheats } = useLikedCheats();
   const { initialize } = useLikesStore();
+  const { checkAndAwardBadge } = useBadges();
 
   useEffect(() => {
     fetchLikeStatus();
@@ -93,15 +95,6 @@ export function useLikes(cheatId: number) {
 
         if (deleteError) throw deleteError;
       } else {
-        const { count } = await supabase
-          .from('likes')
-          .select('*', { count: 'exact' })
-          .eq('user_id', session.user.id);
-
-        if ((count ?? 0) >= PREMIUM_LIMITS.FREE.LIKES) {
-          throw new Error('FREE_LIMIT_REACHED');
-        }
-
         const { error: insertError } = await supabase
           .from('likes')
           .insert({
@@ -110,11 +103,20 @@ export function useLikes(cheatId: number) {
           });
 
         if (insertError) throw insertError;
+
+        // Check badges immediately after successful like
+        await checkAndAwardBadge(session.user.id, 'first_like');
+        const { count } = await supabase
+          .from('likes')
+          .select('*', { count: 'exact' })
+          .eq('user_id', session.user.id);
+        await checkAndAwardBadge(session.user.id, 'like_count', count || 0);
       }
 
       await fetchLikeStatus();
       await refreshLikedCheats();
       await initialize();
+
     } catch (error) {
       if (error instanceof Error && error.message === 'FREE_LIMIT_REACHED') {
         throw error;
