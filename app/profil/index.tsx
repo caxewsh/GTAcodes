@@ -214,7 +214,7 @@ export default function ProfilScreen() {
       <View style={styles.featuresList}>
         {[
           { 
-            icon: 'star' as IconName, 
+            icon: 'heart' as IconName, 
             text: 'Favoris illimités', 
             locked: !isPremium,
             color: colors.premium.favorite
