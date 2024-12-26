@@ -3,6 +3,7 @@ import { supabase } from '../utils/supabase';
 import { PREMIUM_LIMITS } from '../constants/premium';
 import { useLikedCheats } from './useLikedCheats';
 import { useLikesStore } from '../stores/likesStore';
+import { useBadges } from './useBadges';
 
 export function useLikes(cheatId: number) {
   const [isLiked, setIsLiked] = useState(false);
@@ -10,6 +11,7 @@ export function useLikes(cheatId: number) {
   const [loading, setLoading] = useState(true);
   const { likedCheats, refresh: refreshLikedCheats } = useLikedCheats();
   const { initialize } = useLikesStore();
+  const { checkAndAwardBadge } = useBadges();
 
   useEffect(() => {
     fetchLikeStatus();
@@ -110,6 +112,16 @@ export function useLikes(cheatId: number) {
           });
 
         if (insertError) throw insertError;
+      }
+
+      if (!isLiked) {
+        const { count } = await supabase
+          .from('likes')
+          .select('*', { count: 'exact' })
+          .eq('user_id', session.user.id);
+
+        await checkAndAwardBadge(session.user.id, 'first_like');
+        await checkAndAwardBadge(session.user.id, 'like_count', count || 0);
       }
 
       await fetchLikeStatus();

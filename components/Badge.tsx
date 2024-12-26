@@ -1,0 +1,104 @@
+import { View, Text, StyleSheet } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { colors, spacing, borderRadius, typography } from '../constants/theme';
+
+// Map badge types to appropriate icons and colors
+const BADGE_STYLES = {
+  first_like: {
+    icon: 'heart-outline',
+    color: colors.premium.favorite,
+    background: `${colors.premium.favorite}20`,
+  },
+  like_count: {
+    icon: 'fire',
+    color: '#FF6B6B',
+    background: '#FF6B6B20',
+  },
+  like_limit: {
+    icon: 'lock-alert',
+    color: '#4CAF50',
+    background: '#4CAF5020',
+  },
+  // Add more badge types as needed
+} as const;
+
+interface BadgeProps {
+  name: string;
+  description: string;
+  trigger_type: keyof typeof BADGE_STYLES;
+  isLocked?: boolean;
+}
+
+export function Badge({ name, description, trigger_type, isLocked = false }: BadgeProps) {
+  const style = BADGE_STYLES[trigger_type] || BADGE_STYLES.first_like;
+
+  return (
+    <View style={[styles.container, isLocked && styles.locked]}>
+      <View style={[styles.iconContainer, { backgroundColor: style.background }]}>
+        <MaterialCommunityIcons 
+          name={style.icon}
+          size={32} 
+          color={isLocked ? colors.text.secondary : style.color}
+        />
+      </View>
+      <Text style={[styles.name, isLocked && styles.lockedText]}>{name}</Text>
+      <Text style={[styles.description, isLocked && styles.lockedText]}>{description}</Text>
+      {isLocked && (
+        <View style={styles.lockOverlay}>
+          <MaterialCommunityIcons name="lock-outline" size={24} color={colors.text.secondary} />
+        </View>
+      )}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    width: 150,
+    padding: spacing.md,
+    backgroundColor: colors.background.secondary,
+    borderRadius: borderRadius.md,
+    marginRight: spacing.md,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border.primary,
+    position: 'relative',
+  },
+  iconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  name: {
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.bold,
+    color: colors.text.primary,
+    marginBottom: spacing.xs,
+    textAlign: 'center',
+  },
+  description: {
+    fontSize: typography.sizes.sm,
+    color: colors.text.secondary,
+    textAlign: 'center',
+  },
+  locked: {
+    opacity: 0.7,
+  },
+  lockedText: {
+    color: colors.text.secondary,
+  },
+  lockOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: borderRadius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+}); 
