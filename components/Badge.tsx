@@ -2,7 +2,6 @@ import { View, Text, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors, spacing, borderRadius, typography } from '../constants/theme';
 
-// Map badge types to appropriate icons and colors
 const BADGE_STYLES = {
   first_like: {
     icon: 'heart-outline',
@@ -19,7 +18,6 @@ const BADGE_STYLES = {
     color: '#4CAF50',
     background: '#4CAF5020',
   },
-  // Add more badge types as needed
 } as const;
 
 interface BadgeProps {
@@ -27,23 +25,45 @@ interface BadgeProps {
   description: string;
   trigger_type: keyof typeof BADGE_STYLES;
   isLocked?: boolean;
+  isAuthenticated?: boolean;
 }
 
-export function Badge({ name, description, trigger_type, isLocked = false }: BadgeProps) {
+export function Badge({ 
+  name, 
+  description, 
+  trigger_type, 
+  isLocked = false,
+  isAuthenticated = false 
+}: BadgeProps) {
   const style = BADGE_STYLES[trigger_type] || BADGE_STYLES.first_like;
+  const shouldHideContent = !isAuthenticated || (isAuthenticated && isLocked);
 
   return (
-    <View style={[styles.container, isLocked && styles.locked]}>
+    <View style={[styles.container, shouldHideContent && styles.locked]}>
       <View style={[styles.iconContainer, { backgroundColor: style.background }]}>
         <MaterialCommunityIcons 
           name={style.icon}
           size={32} 
-          color={isLocked ? colors.text.secondary : style.color}
+          color={shouldHideContent ? colors.text.secondary : style.color}
         />
       </View>
-      <Text style={[styles.name, isLocked && styles.lockedText]}>{name}</Text>
-      <Text style={[styles.description, isLocked && styles.lockedText]}>{description}</Text>
-      {isLocked && (
+      {shouldHideContent ? (
+        <>
+          <Text style={styles.name}>Badge mystère</Text>
+          <Text style={styles.description}>
+            {isAuthenticated 
+              ? 'Débloquez ce badge pour découvrir son contenu'
+              : 'Connectez-vous pour débloquer les badges'
+            }
+          </Text>
+        </>
+      ) : (
+        <>
+          <Text style={styles.name}>{name}</Text>
+          <Text style={styles.description}>{description}</Text>
+        </>
+      )}
+      {shouldHideContent && (
         <View style={styles.lockOverlay}>
           <MaterialCommunityIcons name="lock-outline" size={24} color={colors.text.secondary} />
         </View>
@@ -86,9 +106,6 @@ const styles = StyleSheet.create({
   },
   locked: {
     opacity: 0.7,
-  },
-  lockedText: {
-    color: colors.text.secondary,
   },
   lockOverlay: {
     position: 'absolute',

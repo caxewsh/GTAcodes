@@ -95,15 +95,6 @@ export function useLikes(cheatId: number) {
 
         if (deleteError) throw deleteError;
       } else {
-        const { count } = await supabase
-          .from('likes')
-          .select('*', { count: 'exact' })
-          .eq('user_id', session.user.id);
-
-        if ((count ?? 0) >= PREMIUM_LIMITS.FREE.LIKES) {
-          throw new Error('FREE_LIMIT_REACHED');
-        }
-
         const { error: insertError } = await supabase
           .from('likes')
           .insert({
@@ -112,21 +103,20 @@ export function useLikes(cheatId: number) {
           });
 
         if (insertError) throw insertError;
-      }
 
-      if (!isLiked) {
+        // Check badges immediately after successful like
+        await checkAndAwardBadge(session.user.id, 'first_like');
         const { count } = await supabase
           .from('likes')
           .select('*', { count: 'exact' })
           .eq('user_id', session.user.id);
-
-        await checkAndAwardBadge(session.user.id, 'first_like');
         await checkAndAwardBadge(session.user.id, 'like_count', count || 0);
       }
 
       await fetchLikeStatus();
       await refreshLikedCheats();
       await initialize();
+
     } catch (error) {
       if (error instanceof Error && error.message === 'FREE_LIMIT_REACHED') {
         throw error;

@@ -182,15 +182,18 @@ export default function ProfilScreen() {
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Badges</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        {allBadges.map(badge => (
-          <Badge
-            key={badge.id}
-            name={badge.name}
-            description={badge.description}
-            trigger_type={badge.trigger_type}
-            isLocked={!userBadges.some(ub => ub.id === badge.id)}
-          />
-        ))}
+        {allBadges
+          .sort((a, b) => (a.trigger_value || 0) - (b.trigger_value || 0))
+          .map(badge => (
+            <Badge
+              key={badge.id}
+              name={badge.name}
+              description={badge.description}
+              trigger_type={badge.trigger_type}
+              isLocked={!user || !userBadges.some(ub => ub.id === badge.id)}
+              isAuthenticated={!!user}
+            />
+          ))}
       </ScrollView>
     </View>
   );
