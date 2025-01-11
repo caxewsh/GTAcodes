@@ -1,127 +1,78 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabase';
 import { PREMIUM_LIMITS } from '../constants/premium';
-import { useLikedCheats } from './useLikedCheats';
-import { useLikesStore } from '../stores/likesStore';
-import { useBadges } from './useBadges';
 
 export function useLikes(cheatId: number) {
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const { likedCheats, refresh: refreshLikedCheats } = useLikedCheats();
-  const { initialize } = useLikesStore();
-  const { checkAndAwardBadge } = useBadges();
 
   useEffect(() => {
     fetchLikeStatus();
-    const channel = setupRealtimeSubscription();
-    
-    return () => {
-      channel.unsubscribe();
-    };
   }, [cheatId]);
 
   const fetchLikeStatus = async () => {
     try {
-      setLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        setLoading(false);
+        return;
+      }
 
-      const { count, error: countError } = await supabase
-        .from('likes')
-        .select('*', { count: 'exact' })
-        .eq('cheat_id', cheatId);
-
-      if (countError) throw countError;
-      setLikesCount(count || 0);
-
-      if (session?.user) {
-        const { data, error: likeError } = await supabase
+      const [likeStatus, likesCount] = await Promise.all([
+        supabase
           .from('likes')
           .select('id')
-          .eq('cheat_id', cheatId)
           .eq('user_id', session.user.id)
-          .single();
+          .eq('cheat_id', cheatId)
+          .single(),
+        supabase
+          .from('likes')
+          .select('*', { count: 'exact' })
+          .eq('cheat_id', cheatId)
+      ]);
 
-        if (likeError && likeError.code !== 'PGRST116') {
-          throw likeError;
-        }
-        setIsLiked(!!data);
-      }
+      setIsLiked(!!likeStatus.data);
+      setLikesCount(likesCount.count || 0);
     } catch (error) {
-      console.error('Error in fetchLikeStatus:', error);
+      console.error('Error fetching like status:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const setupRealtimeSubscription = () => {
-    return supabase.channel(`public:likes:cheat_id_${cheatId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'likes',
-          filter: `cheat_id=eq.${cheatId}`
-        },
-        () => fetchLikeStatus()
-      )
-      .subscribe();
-  };
-
   const toggleLike = async () => {
-    if (loading) return;
     try {
+      setLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) throw new Error('Must be authenticated to like');
 
-      await refreshLikedCheats();
-
-      if (!isLiked && likedCheats.length >= PREMIUM_LIMITS.FREE.LIKES) {
-        throw new Error('FREE_LIMIT_REACHED');
-      }
-
-      setLoading(true);
-
-      if (isLiked) {
-        const { error: deleteError } = await supabase
+      if (!isLiked) {
+        const { count } = await supabase
           .from('likes')
-          .delete()
-          .match({ 
-            user_id: session.user.id, 
-            cheat_id: cheatId 
-          });
+          .select('*', { count: 'exact' })
+          .eq('user_id', session.user.id);
 
-        if (deleteError) throw deleteError;
-      } else {
-        const { error: insertError } = await supabase
+        if (count && count >= PREMIUM_LIMITS.FREE.LIKES) {
+          throw new Error('FREE_LIMIT_REACHED');
+        }
+
+        await supabase
           .from('likes')
           .insert({
             user_id: session.user.id,
             cheat_id: cheatId
           });
-
-        if (insertError) throw insertError;
-
-        // Check badges immediately after successful like
-        await checkAndAwardBadge(session.user.id, 'first_like');
-        const { count } = await supabase
+      } else {
+        await supabase
           .from('likes')
-          .select('*', { count: 'exact' })
-          .eq('user_id', session.user.id);
-        await checkAndAwardBadge(session.user.id, 'like_count', count || 0);
+          .delete()
+          .eq('user_id', session.user.id)
+          .eq('cheat_id', cheatId);
       }
 
       await fetchLikeStatus();
-      await refreshLikedCheats();
-      await initialize();
-
     } catch (error) {
-      if (error instanceof Error && error.message === 'FREE_LIMIT_REACHED') {
-        throw error;
-      }
-      console.error('Error in toggleLike:', error);
       throw error;
     } finally {
       setLoading(false);

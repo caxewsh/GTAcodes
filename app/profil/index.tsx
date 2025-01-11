@@ -7,7 +7,6 @@ import { signInWithApple, signOut, getCurrentUser } from '../../utils/auth';
 import * as Haptics from 'expo-haptics';
 import EditProfileModal from '../../components/EditProfileModal';
 import { supabase } from '../../utils/supabase';
-import { useLikedCodes } from '../../hooks/useLikedCodes';
 import FavoritesPreview from '../../components/FavoritesPreview';
 import { FavoriteItem } from '../../components/FavoritesList';
 import { useBadges } from '../../hooks/useBadges';
@@ -27,7 +26,6 @@ export default function ProfilScreen() {
   const [isPremium, setIsPremium] = useState(false);
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
   const MAX_FREE_FAVORITES = 10;
-  const { likedCodes } = useLikedCodes();
   const MAX_FREE_LIKES = 10;
   const [allBadges, setAllBadges] = useState<Badge[]>([]);
   const { userBadges, initialize: initializeBadges } = useBadges();

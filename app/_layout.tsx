@@ -1,13 +1,11 @@
 import { Tabs } from 'expo-router';
 import { colors } from '../constants/theme';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { useInitializeLikes } from '../hooks/useInitializeLikes';
 import { useBadges } from '../hooks/useBadges';
 import { BadgeModal } from '../components/BadgeModal';
 import { useEffect } from 'react';
 
 export default function AppLayout() {
-  useInitializeLikes();
   const { initialize: initializeBadges, newBadge, clearNewBadge } = useBadges();
 
   useEffect(() => {
