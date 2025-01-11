@@ -7,82 +7,12 @@ import { signInWithApple, signOut, getCurrentUser } from '../../utils/auth';
 import * as Haptics from 'expo-haptics';
 import EditProfileModal from '../../components/EditProfileModal';
 import { supabase } from '../../utils/supabase';
-import { useLikedCodes } from '../../hooks/useLikedCodes';
 import FavoritesPreview from '../../components/FavoritesPreview';
 import { FavoriteItem } from '../../components/FavoritesList';
+import { useBadges } from '../../hooks/useBadges';
+import { Badge } from '../../components/Badge';
 
 type IconName = keyof typeof Ionicons.glyphMap;
-
-const BADGES = [
-  { 
-    id: 1, 
-    name: 'Débutant', 
-    icon: 'bookmark-outline',
-    description: 'Créez votre première collection',
-    category: 'Collections',
-    progress: 0,
-    total: 1,
-  },
-  { 
-    id: 2, 
-    name: 'Populaire', 
-    icon: 'heart-outline',
-    description: 'Obtenez 10 likes sur une collection',
-    category: 'Social',
-    progress: 0,
-    total: 10,
-    isPremium: true,
-  },
-  { 
-    id: 3, 
-    name: 'Organisé', 
-    icon: 'folder-outline',
-    description: 'Créez 5 collections différentes',
-    category: 'Collections',
-    progress: 0,
-    total: 5,
-    isPremium: true,
-  },
-  { 
-    id: 4, 
-    name: 'Influenceur', 
-    icon: 'trending-up-outline',
-    description: 'Atteignez 50 likes au total',
-    category: 'Social',
-    progress: 0,
-    total: 50,
-    isPremium: true,
-  },
-  { 
-    id: 5, 
-    name: 'Top 10', 
-    icon: 'star-outline',
-    description: 'Une collection dans le top 10',
-    category: 'Social',
-    progress: 0,
-    total: 1,
-    isPremium: true,
-  },
-  { 
-    id: 6, 
-    name: 'Curateur', 
-    icon: 'library-outline',
-    description: 'Sauvegardez 20 codes en favoris',
-    category: 'Favoris',
-    progress: 0,
-    total: 20,
-  },
-  { 
-    id: 7, 
-    name: 'Connecté', 
-    icon: 'share-social-outline',
-    description: 'Partagez 3 collections',
-    category: 'Social',
-    progress: 0,
-    total: 3,
-    isPremium: true,
-  },
-];
 
 interface Section {
   title: string;
@@ -96,12 +26,29 @@ export default function ProfilScreen() {
   const [isPremium, setIsPremium] = useState(false);
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
   const MAX_FREE_FAVORITES = 10;
-  const { likedCodes } = useLikedCodes();
   const MAX_FREE_LIKES = 10;
+  const [allBadges, setAllBadges] = useState<Badge[]>([]);
+  const { userBadges, initialize: initializeBadges } = useBadges();
 
   useEffect(() => {
     checkUser();
   }, []);
+
+  useEffect(() => {
+    const fetchAllBadges = async () => {
+      const { data: badges } = await supabase
+        .from('badges')
+        .select('*')
+        .order('trigger_value', { ascending: true });
+      
+      setAllBadges(badges || []);
+    };
+    
+    fetchAllBadges();
+    if (user) {
+      initializeBadges();
+    }
+  }, [user]);
 
   const checkUser = async () => {
     try {
@@ -233,25 +180,18 @@ export default function ProfilScreen() {
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Badges</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        {BADGES.map(badge => (
-          <View 
-            key={badge.id} 
-            style={[styles.badgeCard, !user && styles.badgeCardLocked]}
-          >
-            <Ionicons 
-              name={badge.icon as keyof typeof Ionicons.glyphMap} 
-              size={32} 
-              color={colors.primary}
+        {allBadges
+          .sort((a, b) => (a.trigger_value || 0) - (b.trigger_value || 0))
+          .map(badge => (
+            <Badge
+              key={badge.id}
+              name={badge.name}
+              description={badge.description}
+              trigger_type={badge.trigger_type}
+              isLocked={!user || !userBadges.some(ub => ub.id === badge.id)}
+              isAuthenticated={!!user}
             />
-            <Text style={styles.badgeName}>{badge.name}</Text>
-            <Text style={styles.badgeDescription}>{badge.description}</Text>
-            {!user && (
-              <View style={styles.badgeLockOverlay}>
-                <Ionicons name="lock-closed" size={24} color={colors.text.secondary} />
-              </View>
-            )}
-          </View>
-        ))}
+          ))}
       </ScrollView>
     </View>
   );
@@ -272,7 +212,7 @@ export default function ProfilScreen() {
       <View style={styles.featuresList}>
         {[
           { 
-            icon: 'star' as IconName, 
+            icon: 'heart' as IconName, 
             text: 'Favoris illimités', 
             locked: !isPremium,
             color: colors.premium.favorite
@@ -568,5 +508,22 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background.tertiary,
     padding: spacing.xs,
     borderRadius: borderRadius.full,
+  },
+  emptyBadgeState: {
+    width: 200,
+    padding: spacing.md,
+    backgroundColor: colors.background.secondary,
+    borderRadius: borderRadius.md,
+    marginRight: spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border.primary,
+    minHeight: 150,
+  },
+  emptyStateText: {
+    color: colors.text.secondary,
+    fontSize: typography.sizes.sm,
+    textAlign: 'center',
   },
 }); 

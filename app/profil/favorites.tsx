@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, Image, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
@@ -8,7 +8,7 @@ import Animated, {
   FadeIn,
   FadeOut
 } from 'react-native-reanimated';
-import { useLikesStore } from '../../stores/likesStore';
+import { supabase } from '../../utils/supabase';
 import { colors, spacing, typography, borderRadius, shadows } from '../../constants/theme';
 import { platformGames } from '../../constants/GameData';
 import CheatFilters from '../../components/CheatFilters';
@@ -21,9 +21,53 @@ interface ExpandedState {
 
 export default function FavoritesScreen() {
   const router = useRouter();
-  const { likedCheats } = useLikesStore();
+  const [likedCheats, setLikedCheats] = useState([]);
   const [expandedItems, setExpandedItems] = useState<ExpandedState>({});
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchLikedCheats = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+
+      const { data: likes } = await supabase
+        .from('likes')
+        .select(`
+          id,
+          cheat:Cheats (
+            id,
+            cheatName,
+            cheatCode,
+            cheatCategory,
+            game,
+            platform
+          )
+        `)
+        .eq('user_id', session.user.id);
+
+      setLikedCheats(likes?.map(like => like.cheat) || []);
+      setLoading(false);
+    };
+
+    fetchLikedCheats();
+
+    // Subscribe to changes
+    const channel = supabase
+      .channel('likes_changes')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'likes' 
+      }, () => {
+        fetchLikedCheats();
+      })
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, []);
 
   // Get unique categories from liked cheats
   const categories = Array.from(new Set(likedCheats.map(cheat => cheat.cheatCategory)));

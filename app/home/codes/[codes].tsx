@@ -5,14 +5,10 @@ import { supabase } from '../../../utils/supabase';
 import CheatFilters from '../../../components/CheatFilters';
 import { colors, spacing, typography, borderRadius, shadows } from '../../../constants/theme';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Haptics from 'expo-haptics';
-import LikesLimitTooltip from '../../../components/LikesLimitTooltip';
-import { useLikedCodes } from '../../../hooks/useLikedCodes';
 import { LikeButton } from '../../../components/LikeButton';
 import { PREMIUM_LIMITS } from '../../../constants/premium';
-import { useLikedCheats } from '../../../hooks/useLikedCheats';
-import { useLikesStore } from '../../../stores/likesStore';
+import LikesLimitTooltip from '../../../components/LikesLimitTooltip';
+import { usePremium } from '../../../hooks/usePremium';
 
 interface CheatCode {
   id: number;
@@ -21,21 +17,49 @@ interface CheatCode {
   cheatCategory: string;
 }
 
-const MAX_FREE_LIKES = 10;
 const isPremium = false; // We'll replace this with real premium check later
 
 function HeaderRight() {
-  const likesCount = useLikesStore((state) => state.likesCount);
+  const [totalLikes, setTotalLikes] = useState(0);
+  const { isPremium } = usePremium();
+
+  useEffect(() => {
+    const fetchTotalLikes = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+
+      const { count } = await supabase
+        .from('likes')
+        .select('*', { count: 'exact' })
+        .eq('user_id', session.user.id);
+
+      setTotalLikes(count || 0);
+    };
+
+    fetchTotalLikes();
+    
+    // Subscribe to likes changes
+    const channel = supabase
+      .channel('likes_count_changes')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'likes' 
+      }, () => {
+        fetchTotalLikes();
+      })
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, []);
   
   return (
     <View style={styles.headerRight}>
-      <Ionicons 
-        name="heart" 
-        size={20} 
-        color={colors.primary} 
-      />
+      <Ionicons name="heart" size={20} color={colors.primary} />
       <Text style={styles.likesCount}>
-        {likesCount}{!isPremium && `/${PREMIUM_LIMITS.FREE.LIKES}`}
+        {totalLikes}{!isPremium && `/${PREMIUM_LIMITS.FREE.LIKES}`}
       </Text>
       <LikesLimitTooltip />
     </View>
@@ -49,9 +73,6 @@ export default function GameCheatScreen() {
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const { likedCodes, addLikedCode, removeLikedCode, isCodeLiked, initializeLikedCodes } = useLikedCodes();
-  const [likingInProgress, setLikingInProgress] = useState<string | null>(null);
-  const { likedCheats } = useLikedCheats();
 
   React.useLayoutEffect(() => {
     if (game && navigation) {
@@ -77,16 +98,14 @@ export default function GameCheatScreen() {
           .eq('game', game)
           .eq('platform', platform);
 
-        if (error) {
-          console.error('Error fetching cheats:', error);
-          setCheats([]);
-        } else {
-          setCheats(data || []);
-          const uniqueCategories = [...new Set(data?.map(cheat => cheat.cheatCategory))];
-          setCategories(uniqueCategories);
-        }
+        if (error) throw error;
+        
+        setCheats(data || []);
+        const uniqueCategories = [...new Set(data?.map(cheat => cheat.cheatCategory))];
+        setCategories(uniqueCategories);
       } catch (error) {
-        console.error('Unexpected error:', error);
+        console.error('Error fetching cheats:', error);
+        Alert.alert('Error', 'Failed to load cheat codes');
       } finally {
         setLoading(false);
       }
@@ -94,10 +113,6 @@ export default function GameCheatScreen() {
 
     fetchCheats();
   }, [game, platform]);
-
-  useEffect(() => {
-    initializeLikedCodes();
-  }, []);
 
   if (loading) {
     return (
@@ -129,8 +144,6 @@ export default function GameCheatScreen() {
                 </View>
                 <LikeButton 
                   cheatId={item.id}
-                  isPremium={isPremium}
-                  maxFreeLikes={MAX_FREE_LIKES}
                   onPremiumRequired={() => {
                     Alert.alert(
                       'Limite atteinte',

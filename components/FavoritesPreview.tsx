@@ -1,18 +1,73 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useLikesStore } from '../stores/likesStore';
+import { supabase } from '../utils/supabase';
 import { PREMIUM_LIMITS } from '../constants/premium';
 import { colors, spacing, typography, borderRadius, shadows } from '../constants/theme';
+import { usePremium } from '../hooks/usePremium';
 
-interface FavoritesPreviewProps {
-  isPremium: boolean;
-}
-
-export default function FavoritesPreview({ isPremium }: FavoritesPreviewProps) {
+export default function FavoritesPreview() {
   const router = useRouter();
-  const { likesCount, likedCheats } = useLikesStore();
+  const [likedCheats, setLikedCheats] = useState([]);
+  const [totalLikes, setTotalLikes] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const { isPremium } = usePremium();
+
+  const fetchData = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+
+      // Get total likes count first
+      const { count } = await supabase
+        .from('likes')
+        .select('*', { count: 'exact' })
+        .eq('user_id', session.user.id);
+
+      setTotalLikes(count || 0);
+
+      // Get most recent likes for preview
+      const { data: likes } = await supabase
+        .from('likes')
+        .select(`
+          id,
+          cheat:Cheats (
+            id,
+            cheatName,
+            game
+          )
+        `)
+        .eq('user_id', session.user.id)
+        .order('created_at', { ascending: false })
+        .limit(4);
+
+      setLikedCheats(likes?.map(like => like.cheat) || []);
+    } catch (error) {
+      console.error('Error fetching likes:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+
+    const channel = supabase
+      .channel('likes_preview_changes')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'likes' 
+      }, () => {
+        fetchData();
+      })
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -20,7 +75,7 @@ export default function FavoritesPreview({ isPremium }: FavoritesPreviewProps) {
         <View style={styles.titleContainer}>
           <Text style={styles.title}>Mes Favoris</Text>
           <Text style={styles.count}>
-            {likesCount}{!isPremium && `/${PREMIUM_LIMITS.FREE.LIKES}`}
+            {totalLikes}{!isPremium && `/${PREMIUM_LIMITS.FREE.LIKES}`}
           </Text>
         </View>
         <Pressable 

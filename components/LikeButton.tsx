@@ -2,8 +2,9 @@ import React from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { supabase } from '../utils/supabase';
 import { useLikes } from '../hooks/useLikes';
+import { useBadges } from '../hooks/useBadges';
+import { supabase } from '../utils/supabase';
 import { colors, spacing, typography } from '../constants/theme';
 import * as Haptics from 'expo-haptics';
 import Animated, { 
@@ -15,19 +16,13 @@ import Animated, {
 
 type Props = {
   cheatId: number;
-  isPremium?: boolean;
-  maxFreeLikes?: number;
   onPremiumRequired?: () => void;
 };
 
-export function LikeButton({ 
-  cheatId, 
-  isPremium = false,
-  maxFreeLikes = 10,
-  onPremiumRequired 
-}: Props) {
+export function LikeButton({ cheatId, onPremiumRequired }: Props) {
   const router = useRouter();
   const { isLiked, likesCount, loading, toggleLike } = useLikes(cheatId);
+  const { checkAndAwardBadge } = useBadges();
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -36,23 +31,6 @@ export function LikeButton({
 
   const handlePress = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session?.user) {
-        Alert.alert(
-          'Créer un compte',
-          'Créez un compte gratuit pour ajouter des codes en favoris !',
-          [
-            { text: 'Plus tard', style: 'cancel' },
-            { 
-              text: 'Créer un compte',
-              onPress: () => router.push('/auth/signup')
-            }
-          ]
-        );
-        return;
-      }
-
       await Haptics.selectionAsync();
       
       // Animate the heart
@@ -60,11 +38,41 @@ export function LikeButton({
         withSpring(1.2, { damping: 2 }),
         withSpring(1, { damping: 3 })
       );
-      
-      await toggleLike();
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) throw new Error('Must be authenticated to like');
+
+      if (!isLiked) {
+        const { count } = await supabase
+          .from('likes')
+          .select('*', { count: 'exact' })
+          .eq('user_id', session.user.id);
+
+        await toggleLike();
+
+        // Check badges after successful like
+        await checkAndAwardBadge(session.user.id, 'first_like');
+        await checkAndAwardBadge(session.user.id, 'like_count', (count || 0) + 1);
+      } else {
+        await toggleLike();
+      }
     } catch (error) {
       if (error instanceof Error && error.message === 'FREE_LIMIT_REACHED') {
         onPremiumRequired?.();
+        return;
+      }
+      if (error instanceof Error && error.message === 'Must be authenticated to like') {
+        Alert.alert(
+          'Créer un compte',
+          'Créez un compte gratuit pour ajouter des codes en favoris !',
+          [
+            { text: 'Plus tard', style: 'cancel' },
+            { 
+              text: 'Créer un compte',
+              onPress: () => router.push('/profil')
+            }
+          ]
+        );
         return;
       }
       console.error('Error handling like:', error);
@@ -91,10 +99,7 @@ export function LikeButton({
         </Animated.View>
       </Pressable>
       {likesCount > 0 && (
-        <Text style={[
-          styles.count,
-          isLiked && styles.countActive
-        ]}>
+        <Text style={[styles.count, isLiked && styles.countActive]}>
           {likesCount}
         </Text>
       )}

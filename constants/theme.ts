@@ -1,8 +1,8 @@
 export const colors = {
   primary: '#adc178',
   premium: {
-    favorite: '#FFD700',    // Gold
-    notification: '#FF6B6B', // Coral red
+    favorite: '#FF6B6B',    // Coral red
+    notification: '#FFD700', // Gold
     badge: '#4CAF50',       // Green
     theme: '#9C27B0',       // Purple
     collection: '#2196F3',  // Blue
