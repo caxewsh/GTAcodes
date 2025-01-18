@@ -7,39 +7,60 @@ export function useLikes(cheatId: number) {
   const [likesCount, setLikesCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchLikeStatus();
-  }, [cheatId]);
-
   const fetchLikeStatus = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
-        setLoading(false);
-        return;
-      }
+      
+      // Toujours récupérer le nombre total de likes, même si l'utilisateur n'est pas connecté
+      const { count } = await supabase
+        .from('likes')
+        .select('*', { count: 'exact' })
+        .eq('cheat_id', cheatId);
+      
+      setLikesCount(count || 0);
 
-      const [likeStatus, likesCount] = await Promise.all([
-        supabase
+      // Vérifier le statut liked seulement si l'utilisateur est connecté
+      if (session?.user) {
+        const { data } = await supabase
           .from('likes')
           .select('id')
           .eq('user_id', session.user.id)
           .eq('cheat_id', cheatId)
-          .single(),
-        supabase
-          .from('likes')
-          .select('*', { count: 'exact' })
-          .eq('cheat_id', cheatId)
-      ]);
+          .single();
 
-      setIsLiked(!!likeStatus.data);
-      setLikesCount(likesCount.count || 0);
+        setIsLiked(!!data);
+      }
     } catch (error) {
       console.error('Error fetching like status:', error);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchLikeStatus();
+
+    const subscription = supabase
+      .channel(`likes_${cheatId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'likes',
+          filter: `cheat_id=eq.${cheatId}`
+        },
+        () => {
+          // Recharger le statut complet à chaque changement
+          fetchLikeStatus();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [cheatId]);
 
   const toggleLike = async () => {
     try {
