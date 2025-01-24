@@ -53,8 +53,8 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     position: 'absolute',
-    right: spacing.sm,
-    top: spacing.sm,
+    right: spacing.md,
+    top: spacing.md,
     zIndex: 1,
   },
 }); 
