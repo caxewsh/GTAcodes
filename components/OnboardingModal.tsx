@@ -18,14 +18,22 @@ export function OnboardingModal({ isVisible, onClose }: OnboardingModalProps) {
 
   return (
     <Modal visible={isVisible} onClose={onClose}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Rejoignez la communauté !</Text>
+      <View style={styles.content} accessibilityLabel="modale-onboarding">
+        <Text style={styles.title} accessibilityLabel="titre-onboarding">
+          Rejoignez la communauté !
+        </Text>
         
-        <View style={styles.benefitsList}>
-          <Text style={styles.benefitText}>✓ Sauvegardez tes codes favoris</Text>
-          <Text style={styles.benefitText}>✓ Notifications pour les news</Text>
-          <Text style={styles.benefitText}>✓ Obtenir des badges</Text>
-          <Text style={styles.benefitText}>
+        <View style={styles.benefitsList} accessibilityLabel="liste-avantages">
+          <Text style={styles.benefitText} accessibilityLabel="avantage-favoris">
+            ✓ Sauvegardez tes codes favoris
+          </Text>
+          <Text style={styles.benefitText} accessibilityLabel="avantage-notifications">
+            ✓ Notifications pour les news
+          </Text>
+          <Text style={styles.benefitText} accessibilityLabel="avantage-badges">
+            ✓ Obtenir des badges
+          </Text>
+          <Text style={styles.benefitText} accessibilityLabel="avantage-premium">
             ✓ <Text style={styles.premium}>Deviens membre</Text> pour accéder à tout le contenu gratuitement
           </Text>
         </View>
@@ -33,6 +41,9 @@ export function OnboardingModal({ isVisible, onClose }: OnboardingModalProps) {
         <TouchableOpacity 
           style={styles.button} 
           onPress={handleJoinCommunity}
+          accessibilityLabel="bouton-creer-compte"
+          accessibilityRole="button"
+          accessibilityHint="Appuyez pour créer un compte"
         >
           <Text style={styles.buttonText}>Créer un compte</Text>
         </TouchableOpacity>

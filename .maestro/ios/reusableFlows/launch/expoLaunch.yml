@@ -1,0 +1,12 @@
+appId: com.axe.l.r.GTAcodes
+env:
+  EXPO_MODAL_POSITION: "94%,43%"
+---
+- runFlow:
+    when:
+      visible: "Runtime version.*"
+    label: "Run dev-build & close expo modal"
+    commands:
+      - tapOn: "Continue"
+      - tapOn:
+          point: ${EXPO_MODAL_POSITION}

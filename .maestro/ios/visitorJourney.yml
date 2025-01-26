@@ -1,0 +1,29 @@
+appId: com.axe.l.r.GTAcodes
+env:
+  ACCOUNT_CREATION_BUTTON_POSITION: "50%,65%"
+---
+- launchApp:
+    clearState: true
+- tapOn: "http://localhost:8081"
+
+- runFlow:
+    file: reusableFlows/launch/expoLaunch.yml
+
+- assertVisible:
+    id: "modal-container"
+- tapOn:
+    id: "close-modal"
+
+- tapOn: "GTA V "
+
+- assertVisible:
+    id: "Codes GTA V"
+- tapOn: "Véhicules 🛻"
+- tapOn: "Like this cheat"
+- tapOn:
+    point: ${ACCOUNT_CREATION_BUTTON_POSITION}
+
+- runFlow:
+    file: reusableFlows/profil/profilCheck.yml
+
+- stopApp

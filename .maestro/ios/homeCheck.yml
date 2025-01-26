@@ -5,15 +5,12 @@ appId: com.axe.l.r.GTAcodes
 - tapOn: "http://localhost:8081"
 
 - runFlow:
-    when:
-      visible: "Runtime version.*"
-    label: "Run dev-build & close onboarding"
-    commands:
-      - tapOn: "Continue"
-      - tapOn:
-          point: "94%,43%"
-      - tapOn:
-          point: "50%,25%"
+    file: reusableFlows/launch/expoLaunch.yml
+
+- assertVisible:
+    id: "modal-container"
+- tapOn:
+    id: "close-modal"
 
 - assertVisible: "Accueil"
 - assertVisible: "GTA Codes"

@@ -73,8 +73,18 @@ export default function AppLayout() {
             options={{
               title: 'Actualités',
               tabBarIcon: ({ color }) => <FontAwesome size={28} name="newspaper-o" color={color} />,
+              headerTitle: 'News Rockstar mag',
             }}
           />
+            <Tabs.Screen
+              name="maps"
+              options={{
+                title: 'Carte',
+                tabBarIcon: ({ color }) => <FontAwesome size={28} name="map" color={color} />,
+                headerShown: true,
+                headerTitle: 'Carte Interactive',
+              }}
+            />
           <Tabs.Screen
             name="profil"
             options={{
