@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -13,17 +13,21 @@ import Animated, {
   withSequence,
   useSharedValue
 } from 'react-native-reanimated';
+import { OnboardingModal } from './OnboardingModal';
 
-type Props = {
+interface Props {
   cheatId: number;
+  showCount?: boolean;
+  onNotLoggedIn?: () => void;
   onPremiumRequired?: () => void;
-};
+}
 
-export function LikeButton({ cheatId, onPremiumRequired }: Props) {
+export function LikeButton({ cheatId, showCount, onNotLoggedIn, onPremiumRequired }: Props) {
   const router = useRouter();
   const { isLiked, likesCount, loading, toggleLike } = useLikes(cheatId);
   const { checkAndAwardBadge } = useBadges();
   const scale = useSharedValue(1);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }]
@@ -40,7 +44,10 @@ export function LikeButton({ cheatId, onPremiumRequired }: Props) {
       );
 
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) throw new Error('Must be authenticated to like');
+      if (!session?.user) {
+        setShowOnboarding(true);
+        return;
+      }
 
       if (!isLiked) {
         const { count } = await supabase
@@ -59,20 +66,6 @@ export function LikeButton({ cheatId, onPremiumRequired }: Props) {
     } catch (error) {
       if (error instanceof Error && error.message === 'FREE_LIMIT_REACHED') {
         onPremiumRequired?.();
-        return;
-      }
-      if (error instanceof Error && error.message === 'Must be authenticated to like') {
-        Alert.alert(
-          'Créer un compte',
-          'Créez un compte gratuit pour ajouter des codes en favoris !',
-          [
-            { text: 'Plus tard', style: 'cancel' },
-            { 
-              text: 'Créer un compte',
-              onPress: () => router.push('/profil')
-            }
-          ]
-        );
         return;
       }
       console.error('Error handling like:', error);
@@ -103,6 +96,11 @@ export function LikeButton({ cheatId, onPremiumRequired }: Props) {
           {likesCount}
         </Text>
       )}
+
+      <OnboardingModal 
+        isVisible={showOnboarding} 
+        onClose={() => setShowOnboarding(false)} 
+      />
     </View>
   );
 }

@@ -9,6 +9,8 @@ import { LikeButton } from '../../../components/LikeButton';
 import { PREMIUM_LIMITS } from '../../../constants/premium';
 import LikesLimitTooltip from '../../../components/LikesLimitTooltip';
 import { usePremium } from '../../../hooks/usePremium';
+import { PremiumModal } from '../../../components/PremiumModal';
+import { OnboardingModal } from '../../../components/OnboardingModal';
 
 interface CheatCode {
   id: number;
@@ -73,6 +75,8 @@ export default function GameCheatScreen() {
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
 
   React.useLayoutEffect(() => {
     if (game && navigation) {
@@ -144,22 +148,9 @@ export default function GameCheatScreen() {
                 </View>
                 <LikeButton 
                   cheatId={item.id}
-                  onPremiumRequired={() => {
-                    Alert.alert(
-                      'Limite atteinte',
-                      'Passez à la version premium pour sauvegarder plus de favoris !',
-                      [
-                        { text: 'Plus tard' },
-                        { 
-                          text: 'Débloquer (0,99 €)', 
-                          onPress: () => {
-                            // TODO: Implement premium purchase
-                            console.log('Premium purchase clicked');
-                          } 
-                        }
-                      ]
-                    );
-                  }}
+                  showCount={true}
+                  onNotLoggedIn={() => setShowOnboarding(true)}
+                  onPremiumRequired={() => setShowPremiumModal(true)}
                 />
               </View>
               <Text style={styles.cheatName}>{item.cheatName}</Text>
@@ -172,6 +163,16 @@ export default function GameCheatScreen() {
           </Text>
         )}
       </ScrollView>
+
+      <OnboardingModal 
+        isVisible={showOnboarding}
+        onClose={() => setShowOnboarding(false)}
+      />
+      
+      <PremiumModal
+        isVisible={showPremiumModal}
+        onClose={() => setShowPremiumModal(false)}
+      />
     </View>
   );
 }

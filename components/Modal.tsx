@@ -17,12 +17,13 @@ export function Modal({ visible, onClose, children }: ModalProps) {
       onRequestClose={onClose}
     >
       <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.overlay}>
+        <View style={styles.overlay} testID="modal-overlay">
           <TouchableWithoutFeedback>
-            <View style={styles.container}>
+            <View style={styles.container} testID="modal-container">
               <TouchableOpacity 
                 style={styles.closeButton} 
                 onPress={onClose}
+                testID="close-modal"
               >
                 <Ionicons name="close" size={24} color={colors.text.primary} />
               </TouchableOpacity>
@@ -53,8 +54,8 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     position: 'absolute',
-    right: spacing.sm,
-    top: spacing.sm,
+    right: spacing.md,
+    top: spacing.md,
     zIndex: 1,
   },
 }); 

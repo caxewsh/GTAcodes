@@ -1,0 +1,27 @@
+appId: com.axe.l.r.GTAcodes
+---
+- launchApp:
+    clearState: true
+- tapOn: "http://localhost:8081"
+
+- runFlow:
+    file: reusableFlows/launch/expoLaunch.yml
+
+- assertVisible:
+    id: "modal-container"
+- tapOn:
+    id: "close-modal"
+
+- assertVisible: "Accueil"
+- assertVisible: "GTA Codes"
+- assertVisible: "Prochainement... ⏳"
+- assertVisible: "Les plus consultés 🔥"
+
+- scroll
+- assertVisible: "Par plateforme 🕹️"
+- assertVisible: " PLAYSTATION"
+- assertVisible: " XBOX"
+- assertVisible: " PC"
+- assertVisible: " MOBILE"
+
+- stopApp

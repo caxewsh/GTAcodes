@@ -1,0 +1,11 @@
+appId: com.axe.l.r.GTAcodes
+---
+- assertVisible: "Profil"
+- assertVisible: "Mes Favoris"
+- tapOn: "Voir tout "
+- assertVisible: "Aucun code favori pour le moment"
+- tapOn: "Retour"
+- assertVisible: "Badges"
+- assertVisible: "Connectez-vous pour débloquer les badges"
+- "scroll"
+- assertVisible: "Fonctionnalités Premium"
