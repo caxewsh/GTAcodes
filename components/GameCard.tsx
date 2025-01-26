@@ -1,7 +1,7 @@
 // GameCard.tsx
 
 import React from 'react';
-import { StyleSheet, Pressable, Image, Text, View, ImageStyle } from 'react-native';
+import { StyleSheet, TouchableOpacity, Image, Text, View, ImageStyle } from 'react-native';
 import { colors, spacing, shadows, borderRadius } from '../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -16,9 +16,10 @@ interface GameCardProps {
 
 const GameCard = ({ game, onPress }: GameCardProps) => {
   return (
-    <Pressable 
+    <TouchableOpacity 
       style={styles.card}
       onPress={onPress}
+      activeOpacity={0.8}
     >
       <Image 
         source={game.image} 
@@ -37,7 +38,7 @@ const GameCard = ({ game, onPress }: GameCardProps) => {
           />
         </View>
       </View>
-    </Pressable>
+    </TouchableOpacity>
   );
 };
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, Pressable, Image, ImageStyle } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, ImageStyle } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing, typography } from '../../constants/theme';
@@ -69,10 +69,11 @@ export default function Index() {
             contentContainerStyle={styles.featuredGamesContainer}
           >
             {allGames.map((game, index) => (
-              <Pressable
+              <TouchableOpacity
                 key={index}
                 style={styles.gameCard}
                 onPress={() => handleGameSelect(game.title, 'playstation')}
+                activeOpacity={0.7}
               >
                 <Image source={game.image} style={styles.gameImage as ImageStyle} />
                 <View style={styles.gameInfo}>
@@ -85,7 +86,7 @@ export default function Index() {
                     />
                   </View>
                 </View>
-              </Pressable>
+              </TouchableOpacity>
             ))}
           </ScrollView>
         </View>
@@ -94,10 +95,11 @@ export default function Index() {
           <Text style={styles.sectionTitle}>Par plateforme 🕹️</Text>
           <View style={styles.platformGrid}>
             {Object.keys(platformGames).map((platform) => (
-              <Pressable
+              <TouchableOpacity
                 key={platform}
                 style={styles.platformCard}
                 onPress={() => router.push(`/home/platform/${platform}`)}
+                activeOpacity={0.7}
               >
                 <Ionicons 
                   name={getPlatformIcon(platform)}
@@ -105,7 +107,7 @@ export default function Index() {
                   color={colors.primary}
                 />
                 <Text style={styles.platformText}>{platform.toUpperCase()}</Text>
-              </Pressable>
+              </TouchableOpacity>
             ))}
           </View>
         </View>
