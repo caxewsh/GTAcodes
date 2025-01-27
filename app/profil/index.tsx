@@ -10,7 +10,7 @@ import { supabase } from '../../utils/supabase';
 import FavoritesPreview from '../../components/FavoritesPreview';
 import { FavoriteItem } from '../../components/FavoritesList';
 import { useBadges } from '../../hooks/useBadges';
-import { Badge } from '../../components/Badge';
+import { Badge, BadgeProps } from '../../components/Badge';
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -27,7 +27,7 @@ export default function ProfilScreen() {
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
   const MAX_FREE_FAVORITES = 10;
   const MAX_FREE_LIKES = 10;
-  const [allBadges, setAllBadges] = useState<Badge[]>([]);
+  const [allBadges, setAllBadges] = useState<BadgeProps[]>([]);
   const { userBadges, initialize: initializeBadges } = useBadges();
 
   useEffect(() => {
@@ -185,6 +185,7 @@ export default function ProfilScreen() {
           .map(badge => (
             <Badge
               key={badge.id}
+              id={badge.id}
               name={badge.name}
               description={badge.description}
               trigger_type={badge.trigger_type}
@@ -261,7 +262,7 @@ export default function ProfilScreen() {
   );
 
   const renderFavoritesPreview = () => (
-    <FavoritesPreview isPremium={isPremium} />
+    <FavoritesPreview />
   );
 
   const sections = [

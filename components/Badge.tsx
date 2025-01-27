@@ -20,10 +20,12 @@ const BADGE_STYLES = {
   },
 } as const;
 
-interface BadgeProps {
+export interface BadgeProps {
+  id: number;
   name: string;
   description: string;
   trigger_type: keyof typeof BADGE_STYLES;
+  trigger_value?: number;
   isLocked?: boolean;
   isAuthenticated?: boolean;
 }
