@@ -14,6 +14,7 @@ import Animated, {
   useSharedValue
 } from 'react-native-reanimated';
 import { OnboardingModal } from './OnboardingModal';
+import { usePremium } from '../hooks/usePremium';
 
 interface Props {
   cheatId: number;
@@ -26,6 +27,7 @@ export function LikeButton({ cheatId, showCount, onNotLoggedIn, onPremiumRequire
   const router = useRouter();
   const { isLiked, likesCount, loading, toggleLike } = useLikes(cheatId);
   const { checkAndAwardBadge } = useBadges();
+  const { isPremium, limits } = usePremium();
   const scale = useSharedValue(1);
   const [showOnboarding, setShowOnboarding] = useState(false);
 
@@ -37,7 +39,6 @@ export function LikeButton({ cheatId, showCount, onNotLoggedIn, onPremiumRequire
     try {
       await Haptics.selectionAsync();
       
-      // Animate the heart
       scale.value = withSequence(
         withSpring(1.2, { damping: 2 }),
         withSpring(1, { damping: 3 })
@@ -55,19 +56,19 @@ export function LikeButton({ cheatId, showCount, onNotLoggedIn, onPremiumRequire
           .select('*', { count: 'exact' })
           .eq('user_id', session.user.id);
 
-        await toggleLike();
+        // Ne pas vérifier la limite ni ouvrir la modale si l'utilisateur est premium
+        if (!isPremium && (count || 0) >= limits.LIKES) {
+          onPremiumRequired?.();
+          return;
+        }
 
-        // Check badges after successful like
+        await toggleLike();
         await checkAndAwardBadge(session.user.id, 'first_like');
         await checkAndAwardBadge(session.user.id, 'like_count', (count || 0) + 1);
       } else {
         await toggleLike();
       }
     } catch (error) {
-      if (error instanceof Error && error.message === 'FREE_LIMIT_REACHED') {
-        onPremiumRequired?.();
-        return;
-      }
       console.error('Error handling like:', error);
       Alert.alert('Erreur', 'Impossible de sauvegarder le like');
     }

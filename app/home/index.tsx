@@ -40,7 +40,18 @@ export default function Index() {
             contentContainerStyle={styles.featuredGamesContainer}
           >
             {comingSoonGames.map((game, index) => (
-              <View key={index} style={styles.gameCard}>
+              <TouchableOpacity
+                key={index}
+                style={styles.gameCard}
+                onPress={() => {
+                  if (game.title === "GTA VI") {
+                    router.push('/home/gta6');
+                  } else if (game.title === "GTA IV") {
+                    router.push('/home/gta4');
+                  }
+                }}
+                activeOpacity={0.7}
+              >
                 <Image source={game.image} style={styles.gameImage as ImageStyle} />
                 <View style={styles.gameInfo}>
                   <Text style={styles.gameTitle}>{game.title}</Text>
@@ -56,7 +67,7 @@ export default function Index() {
                     ))}
                   </View>
                 </View>
-              </View>
+              </TouchableOpacity>
             ))}
           </ScrollView>
         </View>

@@ -19,11 +19,9 @@ interface CheatCode {
   cheatCategory: string;
 }
 
-const isPremium = false; // We'll replace this with real premium check later
-
 function HeaderRight() {
   const [totalLikes, setTotalLikes] = useState(0);
-  const { isPremium } = usePremium();
+  const { isPremium, limits } = usePremium();
 
   useEffect(() => {
     const fetchTotalLikes = async () => {
@@ -61,7 +59,7 @@ function HeaderRight() {
     <View style={styles.headerRight}>
       <Ionicons name="heart" size={20} color={colors.primary} />
       <Text style={styles.likesCount}>
-        {totalLikes}{!isPremium && `/${PREMIUM_LIMITS.FREE.LIKES}`}
+        {totalLikes}{!isPremium && `/${limits.LIKES}`}
       </Text>
       <LikesLimitTooltip />
     </View>

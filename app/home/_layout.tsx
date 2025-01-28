@@ -23,12 +23,26 @@ export default function HomeLayout() {
         }} 
       />
       <Stack.Screen 
+        name="gta6" 
+        options={{
+          ...commonHeaderOptions,
+          title: 'GTA VI'
+        }}
+      />
+      <Stack.Screen 
         name="platform/[platform]" 
         options={commonHeaderOptions}
       />
       <Stack.Screen 
         name="codes/[codes]" 
         options={commonHeaderOptions}
+      />
+      <Stack.Screen 
+        name="gta4" 
+        options={{
+          ...commonHeaderOptions,
+          title: 'GTA IV'
+        }}
       />
     </Stack>
   );
