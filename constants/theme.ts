@@ -1,5 +1,6 @@
 export const colors = {
   primary: '#adc178',
+  error: '#FF3B30', // Ajout d'une couleur d'erreur (rouge iOS)
   premium: {
     favorite: '#FF6B6B',    // Coral red
     notification: '#FFD700', // Gold

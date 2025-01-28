@@ -108,53 +108,67 @@ export default function ProfilScreen() {
     }
   };
 
-  const renderProfileCard = () => (
-    <View style={styles.profileCard}>
-      <View style={styles.profileHeader}>
-        <View style={styles.avatarContainer}>
-          <Image 
-            source={require('../../assets/carljohnson.jpg')}
-            style={styles.avatar}
-          />
-          {user && (
-            <Pressable style={styles.editAvatarButton}>
-              <Ionicons name="camera" size={20} color={colors.text.primary} />
-            </Pressable>
-          )}
+  const renderProfileCard = () => {
+    const truncateUsername = (name: string) => {
+      return name.length > 10 ? `${name.slice(0, 10)}..` : name;
+    };
+
+    return (
+      <View style={styles.profileCard}>
+        <View style={styles.profileHeader}>
+          <View style={styles.avatarContainer}>
+            <Image 
+              source={require('../../assets/carljohnson.jpg')}
+              style={styles.avatar}
+            />
+            {user && (
+              <Pressable style={styles.editAvatarButton}>
+                <Ionicons name="camera" size={20} color={colors.text.primary} />
+              </Pressable>
+            )}
+          </View>
+          <View style={styles.profileInfo}>
+            <View style={styles.profileTopRow}>
+              <Text style={styles.username}>
+                {truncateUsername(user?.user_metadata?.full_name || 'Invité')}
+              </Text>
+              {isPremium && (
+                <View style={styles.premiumBadge}>
+                  <Ionicons name="diamond" size={14} color={colors.premium.badge} />
+                  <Text style={styles.premiumBadgeText}>VIP</Text>
+                </View>
+              )}
+            </View>
+            {user && (
+              <Pressable 
+                style={styles.editButton}
+                onPress={() => setEditModalVisible(true)}
+              >
+                <Text style={styles.editButtonText}>Modifier le profil</Text>
+              </Pressable>
+            )}
+          </View>
         </View>
-        <View style={styles.profileInfo}>
-          <Text style={styles.username}>
-            {user?.user_metadata?.full_name || 'Invité'}
-          </Text>
-          {user && (
-            <Pressable 
-              style={styles.editButton}
-              onPress={() => setEditModalVisible(true)}
-            >
-              <Text style={styles.editButtonText}>Modifier le profil</Text>
-            </Pressable>
-          )}
-        </View>
+        {!user && (
+          <Pressable 
+            style={styles.appleButton}
+            onPress={handleSignIn}
+          >
+            <Ionicons name="logo-apple" size={24} color={colors.text.primary} />
+            <Text style={styles.appleButtonText}>Continuer avec Apple</Text>
+          </Pressable>
+        )}
+        {user && (
+          <Pressable 
+            style={styles.signOutButton}
+            onPress={handleSignOut}
+          >
+            <Text style={styles.signOutButtonText}>Se déconnecter</Text>
+          </Pressable>
+        )}
       </View>
-      {!user && (
-        <Pressable 
-          style={styles.appleButton}
-          onPress={handleSignIn}
-        >
-          <Ionicons name="logo-apple" size={24} color={colors.text.primary} />
-          <Text style={styles.appleButtonText}>Continuer avec Apple</Text>
-        </Pressable>
-      )}
-      {user && (
-        <Pressable 
-          style={styles.signOutButton}
-          onPress={handleSignOut}
-        >
-          <Text style={styles.signOutButtonText}>Se déconnecter</Text>
-        </Pressable>
-      )}
-    </View>
-  );
+    );
+  };
 
   const renderBadgesSection = () => (
     <View style={styles.section}>
@@ -508,5 +522,27 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     fontSize: typography.sizes.sm,
     textAlign: 'center',
+  },
+  profileTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  premiumBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.background.tertiary,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+    borderWidth: 1,
+    borderColor: colors.premium.badge,
+    gap: spacing.xs,
+  },
+  premiumBadgeText: {
+    color: colors.premium.badge,
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.semibold,
   },
 }); 
