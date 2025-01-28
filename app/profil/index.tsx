@@ -11,6 +11,7 @@ import FavoritesPreview from '../../components/FavoritesPreview';
 import { FavoriteItem } from '../../components/FavoritesList';
 import { useBadges } from '../../hooks/useBadges';
 import { Badge, BadgeProps } from '../../components/Badge';
+import { usePremium } from '../../hooks/usePremium';
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -23,12 +24,9 @@ export default function ProfilScreen() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [editModalVisible, setEditModalVisible] = useState(false);
-  const [isPremium, setIsPremium] = useState(false);
-  const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
-  const MAX_FREE_FAVORITES = 10;
-  const MAX_FREE_LIKES = 10;
   const [allBadges, setAllBadges] = useState<BadgeProps[]>([]);
   const { userBadges, initialize: initializeBadges } = useBadges();
+  const { isPremium } = usePremium();
 
   useEffect(() => {
     checkUser();
@@ -110,24 +108,6 @@ export default function ProfilScreen() {
     }
   };
 
-  const handleRemoveFavorite = async (id: string) => {
-    try {
-      // Remove from Supabase
-      const { error } = await supabase
-        .from('favorites')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
-      // Update local state
-      setFavorites(prev => prev.filter(fav => fav.id !== id));
-    } catch (error) {
-      console.error('Error removing favorite:', error);
-      Alert.alert('Erreur', "Impossible de supprimer le favori");
-    }
-  };
-
   const renderProfileCard = () => (
     <View style={styles.profileCard}>
       <View style={styles.profileHeader}>
@@ -197,69 +177,71 @@ export default function ProfilScreen() {
     </View>
   );
 
-  const renderFeaturesList = () => (
-    <View style={styles.section}>
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Fonctionnalités Premium</Text>
-      </View>
-      {!isPremium && (
+  const renderFeaturesList = () => {
+    if (isPremium) return null;
+    
+    return (
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Fonctionnalités Premium</Text>
+        </View>
         <Pressable 
           style={styles.premiumButton}
           onPress={() => {/* Implement in-app purchase */}}
         >
           <Text style={styles.premiumButtonText}>Débloquer (0,99 €)</Text>
         </Pressable>
-      )}
-      <View style={styles.featuresList}>
-        {[
-          { 
-            icon: 'heart' as IconName, 
-            text: 'Favoris illimités', 
-            locked: !isPremium,
-            color: colors.premium.favorite
-          },
-          { 
-            icon: 'notifications' as IconName, 
-            text: 'Alertes de nouveaux codes', 
-            locked: !isPremium,
-            color: colors.premium.notification
-          },
-          { 
-            icon: 'trophy' as IconName, 
-            text: 'Débloquez des badges exclusifs', 
-            locked: !isPremium,
-            color: colors.premium.badge
-          },
-          { 
-            icon: 'color-palette' as IconName, 
-            text: 'Thèmes personnalisés', 
-            locked: !isPremium,
-            color: colors.premium.theme
-          },
-          { 
-            icon: 'bookmark' as IconName, 
-            text: 'Collections illimitées', 
-            locked: !isPremium,
-            color: colors.premium.collection
-          },
-        ].map((feature, index) => (
-          <View key={index} style={styles.featureItem}>
-            <Ionicons 
-              name={feature.icon} 
-              size={24} 
-              color={feature.color}
-              style={{ opacity: feature.locked ? 0.5 : 1 }}
-            />
-            <Text style={[
-              styles.featureText,
-              feature.locked && styles.featureTextLocked
-            ]}>{feature.text}</Text>
-            {feature.locked && <Ionicons name="lock-closed" size={20} color={colors.text.secondary} />}
-          </View>
-        ))}
+        <View style={styles.featuresList}>
+          {[
+            { 
+              icon: 'heart' as IconName, 
+              text: 'Favoris illimités', 
+              locked: !isPremium,
+              color: colors.premium.favorite
+            },
+            { 
+              icon: 'notifications' as IconName, 
+              text: 'Alertes de nouveaux codes', 
+              locked: !isPremium,
+              color: colors.premium.notification
+            },
+            { 
+              icon: 'trophy' as IconName, 
+              text: 'Débloquez des badges exclusifs', 
+              locked: !isPremium,
+              color: colors.premium.badge
+            },
+            { 
+              icon: 'color-palette' as IconName, 
+              text: 'Thèmes personnalisés', 
+              locked: !isPremium,
+              color: colors.premium.theme
+            },
+            { 
+              icon: 'bookmark' as IconName, 
+              text: 'Collections illimitées', 
+              locked: !isPremium,
+              color: colors.premium.collection
+            },
+          ].map((feature, index) => (
+            <View key={index} style={styles.featureItem}>
+              <Ionicons 
+                name={feature.icon} 
+                size={24} 
+                color={feature.color}
+                style={{ opacity: feature.locked ? 0.5 : 1 }}
+              />
+              <Text style={[
+                styles.featureText,
+                feature.locked && styles.featureTextLocked
+              ]}>{feature.text}</Text>
+              {feature.locked && <Ionicons name="lock-closed" size={20} color={colors.text.secondary} />}
+            </View>
+          ))}
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   const renderFavoritesPreview = () => (
     <FavoritesPreview />

@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabase';
 import { PREMIUM_LIMITS } from '../constants/premium';
+import { usePremium } from './usePremium';
 
 export function useLikes(cheatId: number) {
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const { isPremium } = usePremium();
 
   const fetchLikeStatus = async () => {
     try {
@@ -74,7 +76,8 @@ export function useLikes(cheatId: number) {
           .select('*', { count: 'exact' })
           .eq('user_id', session.user.id);
 
-        if (count && count >= PREMIUM_LIMITS.FREE.LIKES) {
+        // Ne pas vérifier la limite si l'utilisateur est premium
+        if (!isPremium && count && count >= PREMIUM_LIMITS.FREE.LIKES) {
           throw new Error('FREE_LIMIT_REACHED');
         }
 
