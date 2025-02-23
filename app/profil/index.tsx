@@ -10,7 +10,8 @@ import { supabase } from '../../utils/supabase';
 import FavoritesPreview from '../../components/FavoritesPreview';
 import { FavoriteItem } from '../../components/FavoritesList';
 import { useBadges } from '../../hooks/useBadges';
-import { Badge } from '../../components/Badge';
+import { Badge, BadgeProps } from '../../components/Badge';
+import { usePremium } from '../../hooks/usePremium';
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -23,12 +24,9 @@ export default function ProfilScreen() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [editModalVisible, setEditModalVisible] = useState(false);
-  const [isPremium, setIsPremium] = useState(false);
-  const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
-  const MAX_FREE_FAVORITES = 10;
-  const MAX_FREE_LIKES = 10;
-  const [allBadges, setAllBadges] = useState<Badge[]>([]);
+  const [allBadges, setAllBadges] = useState<BadgeProps[]>([]);
   const { userBadges, initialize: initializeBadges } = useBadges();
+  const { isPremium } = usePremium();
 
   useEffect(() => {
     checkUser();
@@ -110,71 +108,67 @@ export default function ProfilScreen() {
     }
   };
 
-  const handleRemoveFavorite = async (id: string) => {
-    try {
-      // Remove from Supabase
-      const { error } = await supabase
-        .from('favorites')
-        .delete()
-        .eq('id', id);
+  const renderProfileCard = () => {
+    const truncateUsername = (name: string) => {
+      return name.length > 10 ? `${name.slice(0, 10)}..` : name;
+    };
 
-      if (error) throw error;
-
-      // Update local state
-      setFavorites(prev => prev.filter(fav => fav.id !== id));
-    } catch (error) {
-      console.error('Error removing favorite:', error);
-      Alert.alert('Erreur', "Impossible de supprimer le favori");
-    }
-  };
-
-  const renderProfileCard = () => (
-    <View style={styles.profileCard}>
-      <View style={styles.profileHeader}>
-        <View style={styles.avatarContainer}>
-          <Image 
-            source={require('../../assets/carljohnson.jpg')}
-            style={styles.avatar}
-          />
-          {user && (
-            <Pressable style={styles.editAvatarButton}>
-              <Ionicons name="camera" size={20} color={colors.text.primary} />
-            </Pressable>
-          )}
+    return (
+      <View style={styles.profileCard}>
+        <View style={styles.profileHeader}>
+          <View style={styles.avatarContainer}>
+            <Image 
+              source={require('../../assets/carljohnson.jpg')}
+              style={styles.avatar}
+            />
+            {user && (
+              <Pressable style={styles.editAvatarButton}>
+                <Ionicons name="camera" size={20} color={colors.text.primary} />
+              </Pressable>
+            )}
+          </View>
+          <View style={styles.profileInfo}>
+            <View style={styles.profileTopRow}>
+              <Text style={styles.username}>
+                {truncateUsername(user?.user_metadata?.full_name || 'Invité')}
+              </Text>
+              {isPremium && (
+                <View style={styles.premiumBadge}>
+                  <Ionicons name="diamond" size={14} color={colors.premium.badge} />
+                  <Text style={styles.premiumBadgeText}>VIP</Text>
+                </View>
+              )}
+            </View>
+            {user && (
+              <Pressable 
+                style={styles.editButton}
+                onPress={() => setEditModalVisible(true)}
+              >
+                <Text style={styles.editButtonText}>Modifier le profil</Text>
+              </Pressable>
+            )}
+          </View>
         </View>
-        <View style={styles.profileInfo}>
-          <Text style={styles.username}>
-            {user?.user_metadata?.full_name || 'Invité'}
-          </Text>
-          {user && (
-            <Pressable 
-              style={styles.editButton}
-              onPress={() => setEditModalVisible(true)}
-            >
-              <Text style={styles.editButtonText}>Modifier le profil</Text>
-            </Pressable>
-          )}
-        </View>
+        {!user && (
+          <Pressable 
+            style={styles.appleButton}
+            onPress={handleSignIn}
+          >
+            <Ionicons name="logo-apple" size={24} color={colors.text.primary} />
+            <Text style={styles.appleButtonText}>Continuer avec Apple</Text>
+          </Pressable>
+        )}
+        {user && (
+          <Pressable 
+            style={styles.signOutButton}
+            onPress={handleSignOut}
+          >
+            <Text style={styles.signOutButtonText}>Se déconnecter</Text>
+          </Pressable>
+        )}
       </View>
-      {!user && (
-        <Pressable 
-          style={styles.appleButton}
-          onPress={handleSignIn}
-        >
-          <Ionicons name="logo-apple" size={24} color={colors.text.primary} />
-          <Text style={styles.appleButtonText}>Continuer avec Apple</Text>
-        </Pressable>
-      )}
-      {user && (
-        <Pressable 
-          style={styles.signOutButton}
-          onPress={handleSignOut}
-        >
-          <Text style={styles.signOutButtonText}>Se déconnecter</Text>
-        </Pressable>
-      )}
-    </View>
-  );
+    );
+  };
 
   const renderBadgesSection = () => (
     <View style={styles.section}>
@@ -185,6 +179,7 @@ export default function ProfilScreen() {
           .map(badge => (
             <Badge
               key={badge.id}
+              id={badge.id}
               name={badge.name}
               description={badge.description}
               trigger_type={badge.trigger_type}
@@ -196,72 +191,74 @@ export default function ProfilScreen() {
     </View>
   );
 
-  const renderFeaturesList = () => (
-    <View style={styles.section}>
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Fonctionnalités Premium</Text>
-      </View>
-      {!isPremium && (
+  const renderFeaturesList = () => {
+    if (isPremium) return null;
+    
+    return (
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Fonctionnalités Premium</Text>
+        </View>
         <Pressable 
           style={styles.premiumButton}
           onPress={() => {/* Implement in-app purchase */}}
         >
           <Text style={styles.premiumButtonText}>Débloquer (0,99 €)</Text>
         </Pressable>
-      )}
-      <View style={styles.featuresList}>
-        {[
-          { 
-            icon: 'heart' as IconName, 
-            text: 'Favoris illimités', 
-            locked: !isPremium,
-            color: colors.premium.favorite
-          },
-          { 
-            icon: 'notifications' as IconName, 
-            text: 'Alertes de nouveaux codes', 
-            locked: !isPremium,
-            color: colors.premium.notification
-          },
-          { 
-            icon: 'trophy' as IconName, 
-            text: 'Débloquez des badges exclusifs', 
-            locked: !isPremium,
-            color: colors.premium.badge
-          },
-          { 
-            icon: 'color-palette' as IconName, 
-            text: 'Thèmes personnalisés', 
-            locked: !isPremium,
-            color: colors.premium.theme
-          },
-          { 
-            icon: 'bookmark' as IconName, 
-            text: 'Collections illimitées', 
-            locked: !isPremium,
-            color: colors.premium.collection
-          },
-        ].map((feature, index) => (
-          <View key={index} style={styles.featureItem}>
-            <Ionicons 
-              name={feature.icon} 
-              size={24} 
-              color={feature.color}
-              style={{ opacity: feature.locked ? 0.5 : 1 }}
-            />
-            <Text style={[
-              styles.featureText,
-              feature.locked && styles.featureTextLocked
-            ]}>{feature.text}</Text>
-            {feature.locked && <Ionicons name="lock-closed" size={20} color={colors.text.secondary} />}
-          </View>
-        ))}
+        <View style={styles.featuresList}>
+          {[
+            { 
+              icon: 'heart' as IconName, 
+              text: 'Favoris illimités', 
+              locked: !isPremium,
+              color: colors.premium.favorite
+            },
+            { 
+              icon: 'notifications' as IconName, 
+              text: 'Alertes de nouveaux codes', 
+              locked: !isPremium,
+              color: colors.premium.notification
+            },
+            { 
+              icon: 'trophy' as IconName, 
+              text: 'Débloquez des badges exclusifs', 
+              locked: !isPremium,
+              color: colors.premium.badge
+            },
+            { 
+              icon: 'color-palette' as IconName, 
+              text: 'Thèmes personnalisés', 
+              locked: !isPremium,
+              color: colors.premium.theme
+            },
+            { 
+              icon: 'bookmark' as IconName, 
+              text: 'Collections illimitées', 
+              locked: !isPremium,
+              color: colors.premium.collection
+            },
+          ].map((feature, index) => (
+            <View key={index} style={styles.featureItem}>
+              <Ionicons 
+                name={feature.icon} 
+                size={24} 
+                color={feature.color}
+                style={{ opacity: feature.locked ? 0.5 : 1 }}
+              />
+              <Text style={[
+                styles.featureText,
+                feature.locked && styles.featureTextLocked
+              ]}>{feature.text}</Text>
+              {feature.locked && <Ionicons name="lock-closed" size={20} color={colors.text.secondary} />}
+            </View>
+          ))}
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   const renderFavoritesPreview = () => (
-    <FavoritesPreview isPremium={isPremium} />
+    <FavoritesPreview />
   );
 
   const sections = [
@@ -525,5 +522,27 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     fontSize: typography.sizes.sm,
     textAlign: 'center',
+  },
+  profileTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  premiumBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.background.tertiary,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+    borderWidth: 1,
+    borderColor: colors.premium.badge,
+    gap: spacing.xs,
+  },
+  premiumBadgeText: {
+    color: colors.premium.badge,
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.semibold,
   },
 }); 

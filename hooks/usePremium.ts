@@ -1,9 +1,15 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabase';
+import { PREMIUM_LIMITS } from '../constants/premium';
 
 export function usePremium() {
   const [isPremium, setIsPremium] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // Ajout d'une fonction pour obtenir les limites
+  const getLimits = () => {
+    return isPremium ? PREMIUM_LIMITS.PREMIUM : PREMIUM_LIMITS.FREE;
+  };
 
   useEffect(() => {
     const checkPremiumStatus = async () => {
@@ -61,5 +67,9 @@ export function usePremium() {
     };
   }, []);
 
-  return { isPremium, loading };
+  return { 
+    isPremium, 
+    loading,
+    limits: getLimits() 
+  };
 } 

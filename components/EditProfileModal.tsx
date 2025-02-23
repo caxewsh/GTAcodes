@@ -14,8 +14,31 @@ interface EditProfileModalProps {
 export default function EditProfileModal({ visible, onClose, onSave, currentUsername }: EditProfileModalProps) {
   const [username, setUsername] = useState(currentUsername);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const validateUsername = (name: string) => {
+    if (name.trim().length < 3) {
+      return 'Minimum 3 caractères';
+    }
+    if (!/^[a-zA-Z0-9\s-_]+$/.test(name)) {
+      return 'Caractères invalides';
+    }
+    return '';
+  };
+
+  const handleUsernameChange = (text: string) => {
+    setError('');
+    // Limite à 12 caractères et supprime les espaces au début et à la fin
+    setUsername(text.slice(0, 12).trim());
+  };
 
   const handleSave = async () => {
+    const validationError = validateUsername(username);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
     try {
       setLoading(true);
       Haptics.selectionAsync();
@@ -55,22 +78,35 @@ export default function EditProfileModal({ visible, onClose, onSave, currentUser
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Nom d'utilisateur</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, error && styles.inputError]}
                 value={username}
-                onChangeText={setUsername}
+                onChangeText={handleUsernameChange}
                 placeholder="Entrez votre nom d'utilisateur"
                 placeholderTextColor={colors.text.secondary}
                 autoCapitalize="none"
                 autoCorrect={false}
-                maxLength={20}
+                maxLength={12}
                 textContentType="username"
               />
+              {error ? (
+                <View style={styles.errorContainer}>
+                  <Ionicons name="alert-circle" size={16} color={colors.error} />
+                  <Text style={styles.errorText}>{error}</Text>
+                </View>
+              ) : (
+                <Text style={styles.characterCount}>
+                  {username.length}/12 caractères
+                </Text>
+              )}
             </View>
 
             <Pressable 
-              style={[styles.saveButton, loading && styles.saveButtonDisabled]}
+              style={[
+                styles.saveButton, 
+                (loading || error) && styles.saveButtonDisabled
+              ]}
               onPress={handleSave}
-              disabled={loading}
+              disabled={loading || !!error}
             >
               <Text style={styles.saveButtonText}>
                 {loading ? 'Sauvegarde...' : 'Sauvegarder'}
@@ -156,5 +192,26 @@ const styles = StyleSheet.create({
     color: colors.text.dark,
     fontSize: typography.sizes.md,
     fontWeight: typography.weights.semibold,
+  },
+  inputError: {
+    borderColor: colors.error,
+    borderWidth: 2,
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.xs,
+    gap: spacing.xs,
+  },
+  errorText: {
+    color: colors.error,
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.medium,
+  },
+  characterCount: {
+    color: colors.text.secondary,
+    fontSize: typography.sizes.sm,
+    marginTop: spacing.xs,
+    textAlign: 'right',
   },
 }); 
