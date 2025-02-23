@@ -52,8 +52,9 @@ const AnimatedTimeUnit = ({ value, label, initialValue = 0 }: { value: number, l
 };
 
 export function CountdownTimer({ targetDate }: CountdownTimerProps) {
+  const timerRef = React.useRef<NodeJS.Timeout>();
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ 
-    days: 365, // Valeur par défaut approximative
+    days: 365, // Default approximate value
     hours: 23,
     minutes: 59,
     seconds: 59
@@ -75,9 +76,13 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
       }
     };
 
-    calculateTimeLeft(); // Calcul initial
-    const timer = setInterval(calculateTimeLeft, 1000);
-    return () => clearInterval(timer);
+    calculateTimeLeft(); // Initial calculation
+    timerRef.current = setInterval(calculateTimeLeft, 1000);
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
   }, [targetDate]);
 
   return (

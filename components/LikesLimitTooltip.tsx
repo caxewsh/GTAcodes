@@ -3,9 +3,13 @@ import { View, Text, Pressable, StyleSheet, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography, borderRadius } from '../constants/theme';
 import { PREMIUM_LIMITS } from '../constants/premium';
+import { usePremium } from '../hooks/usePremium';
 
 export default function LikesLimitTooltip() {
   const [showTooltip, setShowTooltip] = useState(false);
+  const { isPremium } = usePremium();
+
+  if (isPremium) return null;
 
   return (
     <View style={styles.container}>
