@@ -1,0 +1,73 @@
+name: Deploy Staging
+
+on:
+  push:
+    branches:
+      - CCS-9
+
+jobs:
+  check-build-need:
+    runs-on: ubuntu-latest
+    outputs:
+      need_rebuild: ${{ steps.check.outputs.need_rebuild }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+
+      - name: Check if rebuild needed
+        id: check
+        run: |
+          FILES_CHANGED=$(git diff --name-only HEAD^ HEAD)
+          if echo "$FILES_CHANGED" | grep -E 'package.json|yarn.lock|ios/|android/|app.json|eas.json'; then
+            echo "need_rebuild=true" >> $GITHUB_OUTPUT
+          else
+            echo "need_rebuild=false" >> $GITHUB_OUTPUT
+          fi
+
+  deploy:
+    needs: check-build-need
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🏗 Setup repo
+        uses: actions/checkout@v3
+
+      - name: 🏗 Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+          cache: yarn
+
+      - name: 🏗 Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN_GTA_CODES }}
+
+      - name: 📦 Install dependencies
+        run: yarn install
+
+      - name: 🚀 Deploy to Staging
+        if: needs.check-build-need.outputs.need_rebuild == 'false'
+        run: eas update --channel staging --auto --non-interactive
+
+      - name: 🏗 Build & Submit Staging
+        if: needs.check-build-need.outputs.need_rebuild == 'true'
+        run: |
+          eas build --profile staging --platform ios --non-interactive
+
+      - name: 🏷 Create Git Tag
+        if: needs.check-build-need.outputs.need_rebuild == 'true'
+        id: create_tag
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          BUILD_NUMBER=$(date +%Y%m%d%H%M)
+          TAG="v${VERSION}-${BUILD_NUMBER}"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git tag $TAG
+          git push "https://${{ secrets.GH_PAT }}@github.com/${{ github.repository }}.git" $TAG
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
