@@ -1,0 +1,103 @@
+name: Deploy Staging
+
+on:
+  push:
+    branches:
+      - CCS-9
+
+jobs:
+  check-build-need:
+    runs-on: ubuntu-latest
+    outputs:
+      need_rebuild: ${{ steps.check.outputs.need_rebuild }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+
+      - name: Check if rebuild needed
+        id: check
+        run: |
+          FILES_CHANGED=$(git diff --name-only HEAD^ HEAD)
+          if echo "$FILES_CHANGED" | grep -E 'package.json|yarn.lock|ios/|android/|app.json|eas.json'; then
+            echo "need_rebuild=true" >> $GITHUB_OUTPUT
+          else
+            echo "need_rebuild=false" >> $GITHUB_OUTPUT
+          fi
+
+  deploy:
+    needs: check-build-need
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🏗 Setup repo
+        uses: actions/checkout@v3
+
+      - name: 🏗 Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+          cache: yarn
+
+      - name: 🏗 Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN_GTA_CODES }}
+
+      - name: 📦 Install dependencies
+        run: yarn install
+
+      - name: 🚀 Deploy to Staging
+        if: needs.check-build-need.outputs.need_rebuild == 'false'
+        run: eas update --channel staging --auto --non-interactive
+
+      - name: 🏗 Build & Submit Staging
+        if: needs.check-build-need.outputs.need_rebuild == 'true'
+        run: |
+          eas build --profile staging --platform ios --non-interactive
+
+  create-tag:
+    needs: [deploy, check-build-need]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Get latest tag and package version
+        id: get_versions
+        run: |
+          latest_tag=$(git tag --sort=-v:refname | grep '^v' | head -n 1 || echo "")
+          pkg_version=$(node -p "require('./package.json').version")
+          echo "LATEST_TAG=${latest_tag}" >> $GITHUB_ENV
+          echo "PKG_VERSION=${pkg_version}" >> $GITHUB_ENV
+          echo "Latest tag: ${latest_tag}"
+          echo "Package version: ${pkg_version}"
+
+      - name: Calculate new version
+        id: calc_version
+        run: |
+          if [ -z "$LATEST_TAG" ]; then
+            # Premier tag - utiliser la version du package.json
+            new_version="${PKG_VERSION}"
+          else
+            current_version=${LATEST_TAG#v}  # Remove 'v' prefix
+            IFS='.' read -r major minor patch <<< "$current_version"
+            if [ "${{ needs.check-build-need.outputs.need_rebuild }}" = "true" ]; then
+              # Medium bump pour rebuild
+              new_version="${major}.$((minor + 1)).0"
+            else
+              # Minor bump pour update
+              new_version="${major}.${minor}.$((patch + 1))"
+            fi
+          fi
+          echo "NEW_VERSION=v${new_version}" >> $GITHUB_ENV
+          echo "Calculated new version: v${new_version}"
+
+      - name: Create tag
+        uses: cardinalby/git-tag-action@master
+        env:
+          TAG: ${{ env.NEW_VERSION }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}

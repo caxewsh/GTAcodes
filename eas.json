@@ -1,23 +1,34 @@
 {
   "cli": {
-    "version": ">= 13.1.1",
-    "appVersionSource": "remote"
+    "version": ">= 13.1.1"
   },
   "build": {
-    "development-simulator": {
-      "developmentClient": true,
+    "development": {
+      "distribution": "internal",
       "ios": {
         "simulator": true
       }
     },
-    "preview": {
-      "distribution": "internal"
+    "staging": {
+      "channel": "staging",
+      "distribution": "internal",
+      "ios": {
+        "simulator": false
+      }
     },
     "production": {
-      "autoIncrement": true
+      "channel": "production",
+      "distribution": "store",
+      "ios": {
+        "simulator": false
+      }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "appleId": "${EXPO_PUBLIC_APPLE_ID}"
+      }
+    }
   }
 }
