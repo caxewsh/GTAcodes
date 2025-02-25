@@ -1,0 +1,49 @@
+name: Deploy TestFlight
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-production:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🏗 Setup repo
+        uses: actions/checkout@v3
+
+      - name: 🏗 Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+          cache: yarn
+
+      - name: 🏗 Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN_GTA_CODES }}
+
+      - name: 📦 Install dependencies
+        run: yarn install
+
+      - name: 🚀 Build & Submit to TestFlight
+        run: |
+          eas build --profile production --platform ios --non-interactive
+          eas submit --platform ios --non-interactive
+
+      - name: 🏷 Create Git Tag
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          BUILD_NUMBER=$(date +%Y%m%d%H%M)
+          TAG="v${VERSION}-${BUILD_NUMBER}"
+          git tag $TAG
+          git push origin $TAG
+
+      - name: 📣 Notify Slack on Success
+        if: success()
+        run: |
+          curl -X POST --data-urlencode "payload={\"channel\": \"#déploiement-ios\", \"username\": \"deploy-bot\", \"text\": \"🚀 Déploiement réussi de la v${VERSION} sur TestFlight. <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Voir les logs>\", \"icon_emoji\": \":rocket:\"}" https://hooks.slack.com/services/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
+
+      - name: 📣 Notify Slack on Failure
+        if: failure()
+        run: |
+          curl -X POST --data-urlencode "payload={\"channel\": \"#déploiement-ios\", \"username\": \"deploy-bot\", \"text\": \"💣 Échec du déploiement de la v${VERSION} sur TestFlight. <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Voir les logs>\", \"icon_emoji\": \":boom:\"}" https://hooks.slack.com/services/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 
