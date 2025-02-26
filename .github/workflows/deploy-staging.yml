@@ -77,24 +77,11 @@ jobs:
           echo "new_version=${new_version}" >> $GITHUB_OUTPUT
           echo "NEW_VERSION=v${new_version}" >> $GITHUB_ENV
 
-      - name: Update app.json version
-        run: |
-          VERSION="${{ steps.calc_version.outputs.new_version }}"
-          jq --arg version "$VERSION" '.expo.version = $version' app.json > app.json.tmp
-          mv app.json.tmp app.json
-
-      - name: Update build numbers
+      - name: Update Expo version
         if: needs.check-build-need.outputs.need_rebuild == 'true'
         run: |
-          eas build:version --platform ios
-
-      - name: Commit version changes
-        run: |
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
-          git add app.json
-          git commit -m "chore: bump version to ${{ steps.calc_version.outputs.new_version }}"
-          git push "https://${{ secrets.GH_PAT }}@github.com/${{ github.repository }}.git" HEAD:main
+          VERSION="${{ steps.calc_version.outputs.new_version }}"
+          eas build:version:set --platform ios --version $VERSION
 
       - name: Create tag
         uses: cardinalby/git-tag-action@master
