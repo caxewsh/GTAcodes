@@ -37,21 +37,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18.x
-          cache: yarn
-
-      - name: Install dependencies
-        run: yarn install
-
-      - name: Setup EAS
-        uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN_GTA_CODES }}
-
       - name: Get latest tag and app version
         id: get_versions
         run: |
@@ -76,12 +61,6 @@ jobs:
           fi
           echo "new_version=${new_version}" >> $GITHUB_OUTPUT
           echo "NEW_VERSION=v${new_version}" >> $GITHUB_ENV
-
-      - name: Update Expo version
-        if: needs.check-build-need.outputs.need_rebuild == 'true'
-        run: |
-          VERSION="${{ steps.calc_version.outputs.new_version }}"
-          eas build:version:set --platform ios --version $VERSION
 
       - name: Create tag
         uses: cardinalby/git-tag-action@master
