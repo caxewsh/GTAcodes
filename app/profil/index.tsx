@@ -12,6 +12,7 @@ import { FavoriteItem } from '../../components/FavoritesList';
 import { useBadges } from '../../hooks/useBadges';
 import { Badge, BadgeProps } from '../../components/Badge';
 import { usePremium } from '../../hooks/usePremium';
+import { useRouter } from 'expo-router';
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -27,6 +28,7 @@ export default function ProfilScreen() {
   const [allBadges, setAllBadges] = useState<BadgeProps[]>([]);
   const { userBadges, initialize: initializeBadges } = useBadges();
   const { isPremium } = usePremium();
+  const router = useRouter();
 
   useEffect(() => {
     checkUser();
@@ -135,7 +137,7 @@ export default function ProfilScreen() {
               {isPremium && (
                 <View style={styles.premiumBadge}>
                   <Ionicons name="diamond" size={14} color={colors.premium.badge} />
-                  <Text style={styles.premiumBadgeText}>VIP</Text>
+                  <Text style={styles.premiumBadgeText}>OG</Text>
                 </View>
               )}
             </View>
@@ -160,10 +162,11 @@ export default function ProfilScreen() {
         )}
         {user && (
           <Pressable 
-            style={styles.signOutButton}
-            onPress={handleSignOut}
+            style={styles.infoButton}
+            onPress={() => router.push("/profil/user-info")}
           >
-            <Text style={styles.signOutButtonText}>Se déconnecter</Text>
+            <Ionicons name="settings-outline" size={24} color={colors.text.primary} />
+            <Text style={styles.infoButtonText}>Mes informations</Text>
           </Pressable>
         )}
       </View>
@@ -197,45 +200,49 @@ export default function ProfilScreen() {
     return (
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Fonctionnalités Premium</Text>
+          <Text style={styles.sectionTitle}>A venir dans l'offre Premium</Text>
         </View>
-        <Pressable 
-          style={styles.premiumButton}
-          onPress={() => {/* Implement in-app purchase */}}
-        >
-          <Text style={styles.premiumButtonText}>Débloquer (0,99 €)</Text>
-        </Pressable>
+        <View style={styles.legendContainer}>
+          <View style={styles.legendItem}>
+            <Ionicons name="rocket-outline" size={16} color={colors.text.secondary} />
+            <Text style={styles.legendText}>Arrivée imminente</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <Ionicons name="time-outline" size={16} color={colors.text.secondary} />
+            <Text style={styles.legendText}>En développement</Text>
+          </View>
+        </View>
         <View style={styles.featuresList}>
           {[
             { 
               icon: 'heart' as IconName, 
               text: 'Favoris illimités', 
-              locked: !isPremium,
-              color: colors.premium.favorite
+              color: colors.premium.favorite,
+              statusIcon: 'rocket-outline' as IconName
+            },
+            { 
+              icon: 'ban' as IconName, 
+              text: 'Pas de publicités', 
+              color: colors.premium.notification,
+              statusIcon: 'time-outline' as IconName
             },
             { 
               icon: 'notifications' as IconName, 
               text: 'Alertes de nouveaux codes', 
-              locked: !isPremium,
-              color: colors.premium.notification
+              color: colors.premium.notification,
+              statusIcon: 'time-outline' as IconName
             },
             { 
               icon: 'trophy' as IconName, 
-              text: 'Débloquez des badges exclusifs', 
-              locked: !isPremium,
-              color: colors.premium.badge
-            },
-            { 
-              icon: 'color-palette' as IconName, 
-              text: 'Thèmes personnalisés', 
-              locked: !isPremium,
-              color: colors.premium.theme
+              text: 'Badges exclusifs', 
+              color: colors.premium.badge,
+              statusIcon: 'time-outline' as IconName
             },
             { 
               icon: 'bookmark' as IconName, 
-              text: 'Collections illimitées', 
-              locked: !isPremium,
-              color: colors.premium.collection
+              text: 'Système de collections', 
+              color: colors.premium.collection,
+              statusIcon: 'time-outline' as IconName
             },
           ].map((feature, index) => (
             <View key={index} style={styles.featureItem}>
@@ -243,13 +250,12 @@ export default function ProfilScreen() {
                 name={feature.icon} 
                 size={24} 
                 color={feature.color}
-                style={{ opacity: feature.locked ? 0.5 : 1 }}
+                style={{ opacity: 0.5 }}
               />
-              <Text style={[
-                styles.featureText,
-                feature.locked && styles.featureTextLocked
-              ]}>{feature.text}</Text>
-              {feature.locked && <Ionicons name="lock-closed" size={20} color={colors.text.secondary} />}
+              <Text style={[styles.featureText, styles.featureTextLocked]}>
+                {feature.text}
+              </Text>
+              <Ionicons name={feature.statusIcon} size={20} color={colors.text.secondary} />
             </View>
           ))}
         </View>
@@ -265,8 +271,24 @@ export default function ProfilScreen() {
     { title: 'profile', data: [null] },
     { title: 'favorites', data: [null] },
     { title: 'badges', data: [null] },
-    { title: 'features', data: [null] }
+    { title: 'features', data: [null] },
+    { title: 'logout', data: [null] }
   ];
+
+  const renderLogoutSection = () => {
+    if (!user) return null;
+    
+    return (
+      <View style={styles.logoutSection}>
+        <Pressable 
+          style={styles.signOutButton}
+          onPress={handleSignOut}
+        >
+          <Text style={styles.signOutButtonText}>Se déconnecter</Text>
+        </Pressable>
+      </View>
+    );
+  };
 
   const renderSection = ({ section }: { section: Section }) => {
     switch (section.title) {
@@ -278,6 +300,8 @@ export default function ProfilScreen() {
         return renderBadgesSection();
       case 'features':
         return renderFeaturesList();
+      case 'logout':
+        return renderLogoutSection();
       default:
         return null;
     }
@@ -315,6 +339,7 @@ const styles = StyleSheet.create({
   },
   section: {
     padding: spacing.md,
+    paddingBottom: spacing.xs,
   },
   sectionHeader: {
     marginBottom: spacing.sm,
@@ -414,10 +439,9 @@ const styles = StyleSheet.create({
   featureItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: spacing.md,
+    padding: spacing.sm,
     backgroundColor: colors.background.secondary,
     borderRadius: borderRadius.md,
-    marginBottom: spacing.sm,
     borderWidth: 1,
     borderColor: colors.border.primary,
   },
@@ -543,6 +567,52 @@ const styles = StyleSheet.create({
   premiumBadgeText: {
     color: colors.premium.badge,
     fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.semibold,
+  },
+  premiumButtonDisabled: {
+    backgroundColor: colors.background.tertiary,
+    opacity: 0.7,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  premiumButtonTextDisabled: {
+    color: colors.text.secondary,
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.semibold,
+  },
+  legendContainer: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.xs,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  legendText: {
+    fontSize: typography.sizes.sm,
+    color: colors.text.secondary,
+  },
+  logoutSection: {
+    padding: spacing.md,
+    paddingTop: spacing.lg,
+  },
+  infoButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.background.tertiary,
+    padding: spacing.md,
+    borderRadius: borderRadius.md,
+    marginTop: spacing.lg,
+    gap: spacing.sm,
+  },
+  infoButtonText: {
+    color: colors.text.primary,
+    fontSize: typography.sizes.md,
     fontWeight: typography.weights.semibold,
   },
 }); 

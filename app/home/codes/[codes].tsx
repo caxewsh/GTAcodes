@@ -1,22 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, ScrollView, ActivityIndicator, Alert } from 'react-native';
-import { useLocalSearchParams, useNavigation } from 'expo-router';
+import { StyleSheet, View, Text, ScrollView, ActivityIndicator, Alert, Pressable } from 'react-native';
+import { useLocalSearchParams, useNavigation, router } from 'expo-router';
 import { supabase } from '../../../utils/supabase';
 import CheatFilters from '../../../components/CheatFilters';
 import { colors, spacing, typography, borderRadius, shadows } from '../../../constants/theme';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { LikeButton } from '../../../components/LikeButton';
-import { PREMIUM_LIMITS } from '../../../constants/premium';
 import LikesLimitTooltip from '../../../components/LikesLimitTooltip';
 import { usePremium } from '../../../hooks/usePremium';
 import { PremiumModal } from '../../../components/PremiumModal';
 import { OnboardingModal } from '../../../components/OnboardingModal';
+import { CheatDetailsModal } from '../../../components/CheatDetailsModal';
 
 interface CheatCode {
   id: number;
   cheatName: string;
   cheatCode: string;
   cheatCategory: string;
+  game: string;
+  platform: string;
 }
 
 function HeaderRight() {
@@ -75,6 +77,7 @@ export default function GameCheatScreen() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
+  const [selectedCheat, setSelectedCheat] = useState<CheatCode | null>(null);
 
   React.useLayoutEffect(() => {
     if (game && navigation) {
@@ -96,7 +99,7 @@ export default function GameCheatScreen() {
       try {
         const { data, error } = await supabase
           .from('Cheats')
-          .select('id, cheatName, cheatCode, cheatCategory')
+          .select('id, cheatName, cheatCode, cheatCategory, game, platform')
           .eq('game', game)
           .eq('platform', platform);
 
@@ -137,7 +140,21 @@ export default function GameCheatScreen() {
       >
         {filteredCheats.length > 0 ? (
           filteredCheats.map((item) => (
-            <View key={`cheat-${item.id}`} style={styles.card}>
+            <Pressable 
+              key={`cheat-${item.id}`} 
+              style={styles.card}
+              onPress={() => router.push({
+                pathname: "/home/codes/details",
+                params: {
+                  id: item.id,
+                  cheatName: item.cheatName,
+                  cheatCode: item.cheatCode,
+                  cheatCategory: item.cheatCategory,
+                  game: item.game,
+                  platform: item.platform
+                }
+              })}
+            >
               <View style={styles.cardHeader}>
                 <View style={styles.cheatCategoryTag}>
                   <Text style={styles.cheatCategoryText}>
@@ -153,7 +170,7 @@ export default function GameCheatScreen() {
               </View>
               <Text style={styles.cheatName}>{item.cheatName}</Text>
               <Text style={styles.cheatCode}>{item.cheatCode}</Text>
-            </View>
+            </Pressable>
           ))
         ) : (
           <Text style={styles.noDataText}>
@@ -170,6 +187,12 @@ export default function GameCheatScreen() {
       <PremiumModal
         isVisible={showPremiumModal}
         onClose={() => setShowPremiumModal(false)}
+      />
+
+      <CheatDetailsModal
+        isVisible={!!selectedCheat}
+        cheat={selectedCheat}
+        onClose={() => setSelectedCheat(null)}
       />
     </View>
   );

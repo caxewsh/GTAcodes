@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ImageBackground } from 'react
 import { Modal } from './Modal';
 import { colors, spacing, typography, borderRadius } from '../constants/theme';
 import { useRouter } from 'expo-router';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 interface PremiumModalProps {
   isVisible: boolean;
@@ -24,14 +25,26 @@ export function PremiumModal({ isVisible, onClose }: PremiumModalProps) {
         imageStyle={styles.backgroundImage}
       >
         <View style={styles.content}>
-          <Text style={styles.title}>Rejoins le gang !</Text>
+          <Text style={styles.title}>Deviens OG !</Text>
           
           <View style={styles.benefitsList}>
-            <Text style={styles.benefitText}>✓ Likes illimités</Text>
-            <Text style={styles.benefitText}>✓ Codes exclusifs</Text>
-            <Text style={styles.benefitText}>✓ Pas de publicités</Text>
-            <Text style={styles.benefitText}>✓ Support la communauté</Text>
-            <Text style={styles.price}>Seulement 0,99 € / mois</Text>
+            <View style={styles.benefitRow}>
+              <Ionicons name="infinite" size={24} color={colors.primary} />
+              <Text style={styles.benefitText}>Likes illimités</Text>
+            </View>
+            <View style={styles.benefitRow}>
+              <MaterialCommunityIcons name="fire" size={24} color={colors.primary} />
+              <Text style={styles.benefitText}>Codes exclusifs</Text>
+            </View>
+            <View style={styles.benefitRow}>
+              <MaterialCommunityIcons name="lock-open" size={24} color={colors.primary} />
+              <Text style={styles.benefitText}>Pas de publicités</Text>
+            </View>
+            <View style={styles.benefitRow}>
+              <Ionicons name="rocket" size={24} color={colors.primary} />
+              <Text style={styles.benefitText}>Nouvelles features à venir</Text>
+            </View>
+            <Text style={styles.price}>Seulement 0,99 € / an</Text>
           </View>
 
           <TouchableOpacity 
@@ -53,7 +66,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
   },
   backgroundImage: {
-    opacity: 0.3,
+    opacity: 0.2,
     borderRadius: borderRadius.lg,
   },
   content: {
@@ -71,10 +84,15 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     marginBottom: spacing.xl,
   },
+  benefitRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+    gap: spacing.sm,
+  },
   benefitText: {
     fontSize: 18,
     color: colors.text.primary,
-    marginBottom: spacing.sm,
   },
   price: {
     fontSize: 20,
