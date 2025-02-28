@@ -197,45 +197,49 @@ export default function ProfilScreen() {
     return (
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Fonctionnalités Premium</Text>
+          <Text style={styles.sectionTitle}>A venir dans l'offre Premium</Text>
         </View>
-        <Pressable 
-          style={styles.premiumButton}
-          onPress={() => {/* Implement in-app purchase */}}
-        >
-          <Text style={styles.premiumButtonText}>Débloquer (0,99 €)</Text>
-        </Pressable>
+        <View style={styles.legendContainer}>
+          <View style={styles.legendItem}>
+            <Ionicons name="rocket-outline" size={16} color={colors.text.secondary} />
+            <Text style={styles.legendText}>Arrivée imminente</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <Ionicons name="time-outline" size={16} color={colors.text.secondary} />
+            <Text style={styles.legendText}>En développement</Text>
+          </View>
+        </View>
         <View style={styles.featuresList}>
           {[
             { 
               icon: 'heart' as IconName, 
               text: 'Favoris illimités', 
-              locked: !isPremium,
-              color: colors.premium.favorite
+              color: colors.premium.favorite,
+              statusIcon: 'rocket-outline' as IconName
+            },
+            { 
+              icon: 'ban' as IconName, 
+              text: 'Pas de publicités', 
+              color: colors.premium.notification,
+              statusIcon: 'time-outline' as IconName
             },
             { 
               icon: 'notifications' as IconName, 
               text: 'Alertes de nouveaux codes', 
-              locked: !isPremium,
-              color: colors.premium.notification
+              color: colors.premium.notification,
+              statusIcon: 'time-outline' as IconName
             },
             { 
               icon: 'trophy' as IconName, 
-              text: 'Débloquez des badges exclusifs', 
-              locked: !isPremium,
-              color: colors.premium.badge
-            },
-            { 
-              icon: 'color-palette' as IconName, 
-              text: 'Thèmes personnalisés', 
-              locked: !isPremium,
-              color: colors.premium.theme
+              text: 'Badges exclusifs', 
+              color: colors.premium.badge,
+              statusIcon: 'time-outline' as IconName
             },
             { 
               icon: 'bookmark' as IconName, 
-              text: 'Collections illimitées', 
-              locked: !isPremium,
-              color: colors.premium.collection
+              text: 'Système de collections', 
+              color: colors.premium.collection,
+              statusIcon: 'time-outline' as IconName
             },
           ].map((feature, index) => (
             <View key={index} style={styles.featureItem}>
@@ -243,13 +247,12 @@ export default function ProfilScreen() {
                 name={feature.icon} 
                 size={24} 
                 color={feature.color}
-                style={{ opacity: feature.locked ? 0.5 : 1 }}
+                style={{ opacity: 0.5 }}
               />
-              <Text style={[
-                styles.featureText,
-                feature.locked && styles.featureTextLocked
-              ]}>{feature.text}</Text>
-              {feature.locked && <Ionicons name="lock-closed" size={20} color={colors.text.secondary} />}
+              <Text style={[styles.featureText, styles.featureTextLocked]}>
+                {feature.text}
+              </Text>
+              <Ionicons name={feature.statusIcon} size={20} color={colors.text.secondary} />
             </View>
           ))}
         </View>
@@ -315,6 +318,7 @@ const styles = StyleSheet.create({
   },
   section: {
     padding: spacing.md,
+    paddingBottom: spacing.xs,
   },
   sectionHeader: {
     marginBottom: spacing.sm,
@@ -414,10 +418,9 @@ const styles = StyleSheet.create({
   featureItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: spacing.md,
+    padding: spacing.sm,
     backgroundColor: colors.background.secondary,
     borderRadius: borderRadius.md,
-    marginBottom: spacing.sm,
     borderWidth: 1,
     borderColor: colors.border.primary,
   },
@@ -544,5 +547,32 @@ const styles = StyleSheet.create({
     color: colors.premium.badge,
     fontSize: typography.sizes.sm,
     fontWeight: typography.weights.semibold,
+  },
+  premiumButtonDisabled: {
+    backgroundColor: colors.background.tertiary,
+    opacity: 0.7,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  premiumButtonTextDisabled: {
+    color: colors.text.secondary,
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.semibold,
+  },
+  legendContainer: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.xs,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  legendText: {
+    fontSize: typography.sizes.sm,
+    color: colors.text.secondary,
   },
 }); 
