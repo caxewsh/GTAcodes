@@ -135,7 +135,7 @@ export default function ProfilScreen() {
               {isPremium && (
                 <View style={styles.premiumBadge}>
                   <Ionicons name="diamond" size={14} color={colors.premium.badge} />
-                  <Text style={styles.premiumBadgeText}>VIP</Text>
+                  <Text style={styles.premiumBadgeText}>OG</Text>
                 </View>
               )}
             </View>
