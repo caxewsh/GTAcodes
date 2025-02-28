@@ -13,6 +13,13 @@ export default function ProfilLayout() {
           headerShown: false,
         }}
       />
+      <Stack.Screen 
+        name="user-info"
+        options={{
+          headerShown: false,
+          presentation: 'modal'
+        }}
+      />
     </Stack>
   );
 } 

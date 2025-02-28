@@ -12,6 +12,7 @@ import { FavoriteItem } from '../../components/FavoritesList';
 import { useBadges } from '../../hooks/useBadges';
 import { Badge, BadgeProps } from '../../components/Badge';
 import { usePremium } from '../../hooks/usePremium';
+import { useRouter } from 'expo-router';
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -27,6 +28,7 @@ export default function ProfilScreen() {
   const [allBadges, setAllBadges] = useState<BadgeProps[]>([]);
   const { userBadges, initialize: initializeBadges } = useBadges();
   const { isPremium } = usePremium();
+  const router = useRouter();
 
   useEffect(() => {
     checkUser();
@@ -160,10 +162,11 @@ export default function ProfilScreen() {
         )}
         {user && (
           <Pressable 
-            style={styles.signOutButton}
-            onPress={handleSignOut}
+            style={styles.infoButton}
+            onPress={() => router.push("/profil/user-info")}
           >
-            <Text style={styles.signOutButtonText}>Se déconnecter</Text>
+            <Ionicons name="settings-outline" size={24} color={colors.text.primary} />
+            <Text style={styles.infoButtonText}>Mes informations</Text>
           </Pressable>
         )}
       </View>
@@ -268,8 +271,24 @@ export default function ProfilScreen() {
     { title: 'profile', data: [null] },
     { title: 'favorites', data: [null] },
     { title: 'badges', data: [null] },
-    { title: 'features', data: [null] }
+    { title: 'features', data: [null] },
+    { title: 'logout', data: [null] }
   ];
+
+  const renderLogoutSection = () => {
+    if (!user) return null;
+    
+    return (
+      <View style={styles.logoutSection}>
+        <Pressable 
+          style={styles.signOutButton}
+          onPress={handleSignOut}
+        >
+          <Text style={styles.signOutButtonText}>Se déconnecter</Text>
+        </Pressable>
+      </View>
+    );
+  };
 
   const renderSection = ({ section }: { section: Section }) => {
     switch (section.title) {
@@ -281,6 +300,8 @@ export default function ProfilScreen() {
         return renderBadgesSection();
       case 'features':
         return renderFeaturesList();
+      case 'logout':
+        return renderLogoutSection();
       default:
         return null;
     }
@@ -574,5 +595,24 @@ const styles = StyleSheet.create({
   legendText: {
     fontSize: typography.sizes.sm,
     color: colors.text.secondary,
+  },
+  logoutSection: {
+    padding: spacing.md,
+    paddingTop: spacing.lg,
+  },
+  infoButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.background.tertiary,
+    padding: spacing.md,
+    borderRadius: borderRadius.md,
+    marginTop: spacing.lg,
+    gap: spacing.sm,
+  },
+  infoButtonText: {
+    color: colors.text.primary,
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.semibold,
   },
 }); 

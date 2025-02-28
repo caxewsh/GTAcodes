@@ -14,13 +14,24 @@ const commonHeaderOptions = {
 
 export default function HomeLayout() {
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack 
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <Stack.Screen name="index" />
       <Stack.Screen 
-        name="index" 
-        options={{ 
-          headerShown: false,
-          title: 'Accueil'
-        }} 
+        name="codes/[codes]"
+        options={{
+          ...commonHeaderOptions,
+          headerTitle: 'Codes',
+        }}
+      />
+      <Stack.Screen 
+        name="codes/details"
+        options={{
+          presentation: 'modal'
+        }}
       />
       <Stack.Screen 
         name="gta6" 
@@ -31,10 +42,6 @@ export default function HomeLayout() {
       />
       <Stack.Screen 
         name="platform/[platform]" 
-        options={commonHeaderOptions}
-      />
-      <Stack.Screen 
-        name="codes/[codes]" 
         options={commonHeaderOptions}
       />
       <Stack.Screen 

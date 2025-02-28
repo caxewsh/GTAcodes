@@ -44,7 +44,7 @@ export function PremiumModal({ isVisible, onClose }: PremiumModalProps) {
               <Ionicons name="rocket" size={24} color={colors.primary} />
               <Text style={styles.benefitText}>Nouvelles features à venir</Text>
             </View>
-            <Text style={styles.price}>Seulement 0,99 € / ans</Text>
+            <Text style={styles.price}>Seulement 0,99 € / an</Text>
           </View>
 
           <TouchableOpacity 
