@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors, spacing, borderRadius, typography } from '../constants/theme';
+import { useState, useEffect } from 'react';
 
 const BADGE_STYLES = {
   first_like: {
@@ -31,12 +32,31 @@ export interface BadgeProps {
 }
 
 export function Badge({ 
+  id, 
   name, 
   description, 
   trigger_type, 
   isLocked = false,
   isAuthenticated = false 
 }: BadgeProps) {
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return (
+      <View style={[styles.badgeCard, styles.badgeCardLocked]}>
+        {/* Afficher un placeholder ou rien pendant le chargement */}
+      </View>
+    );
+  }
+
   const style = BADGE_STYLES[trigger_type] || BADGE_STYLES.first_like;
   const shouldHideContent = !isAuthenticated || (isAuthenticated && isLocked);
 
@@ -119,5 +139,11 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  badgeCard: {
+    // Add appropriate styles for the badge card
+  },
+  badgeCardLocked: {
+    // Add appropriate styles for the locked badge card
   },
 }); 

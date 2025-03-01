@@ -51,6 +51,16 @@ export default function FavoritesPreview() {
   };
 
   useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT') {
+        setLikedCheats([]);
+        setTotalLikes(0);
+      } else if (session?.user) {
+        await fetchData();
+      }
+    });
+
+    // Initial fetch
     fetchData();
 
     const channel = supabase
@@ -65,6 +75,7 @@ export default function FavoritesPreview() {
       .subscribe();
 
     return () => {
+      subscription.unsubscribe();
       channel.unsubscribe();
     };
   }, []);
@@ -97,9 +108,9 @@ export default function FavoritesPreview() {
               <Text style={styles.gameText}>{cheat.game}</Text>
             </View>
           ))}
-          {likedCheats.length > 3 && (
+          {totalLikes > 3 && (
             <Text style={styles.moreText}>
-              +{likedCheats.length - 3} autres codes
+              +{totalLikes - 3} autres codes
             </Text>
           )}
         </View>
