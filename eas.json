@@ -31,7 +31,7 @@
   "submit": {
     "production": {
       "ios": {
-        "appleId": "${EXPO_PUBLIC_APPLE_ID}"
+        "appleId": "${EXPO_APPLE_ID}"
       }
     }
   }
