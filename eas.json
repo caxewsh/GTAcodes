@@ -29,10 +29,6 @@
     }
   },
   "submit": {
-    "production": {
-      "ios": {
-        "appleId": "${EXPO_APPLE_ID}"
-      }
-    }
+    "production": {}
   }
 }
