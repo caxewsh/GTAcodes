@@ -3004,7 +3004,7 @@ expo-dev-menu@6.0.23:
   dependencies:
     expo-dev-menu-interface "1.9.3"
 
-expo-eas-client@~0.13.3:
+expo-eas-client@~0.13.2, expo-eas-client@~0.13.3:
   version "0.13.3"
   resolved "https://registry.yarnpkg.com/expo-eas-client/-/expo-eas-client-0.13.3.tgz#1535a99a224e360581c6253b0a1ea767e19815b8"
   integrity sha512-t+1F1tiDocSot8iSnrn/CjTUMvVvPV2DpafSVcticpbSzMGybEN7wcamO1t18fK7WxGXpZE9gxtd80qwv/LLqQ==
@@ -3027,6 +3027,13 @@ expo-haptics@~14.0.1:
   version "14.0.1"
   resolved "https://registry.yarnpkg.com/expo-haptics/-/expo-haptics-14.0.1.tgz#ff4ead605e33f1917e615c9328af7ac1c34892dc"
   integrity sha512-V81FZ7xRUfqM6uSI6FA1KnZ+QpEKnISqafob/xEfcx1ymwhm4V3snuLWWFjmAz+XaZQTqlYa8z3QbqEXz7G63w==
+
+expo-insights@^0.8.2:
+  version "0.8.2"
+  resolved "https://registry.yarnpkg.com/expo-insights/-/expo-insights-0.8.2.tgz#7582c956354c5ba9ca066476531dc2d5233f3c9c"
+  integrity sha512-b3rX7WVtvg3/Ejv/z19dGaY9gdq/+Vyx0D6MWVCi5ERY7VD/Yk7O0ubNG4zaxmZXwDxL4tmI/rX10VQ4Gmqq+g==
+  dependencies:
+    expo-eas-client "~0.13.2"
 
 expo-json-utils@~0.14.0:
   version "0.14.0"
