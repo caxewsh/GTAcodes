@@ -30,7 +30,9 @@ export default function HomeLayout() {
       <Stack.Screen 
         name="codes/details"
         options={{
-          presentation: 'modal'
+          ...commonHeaderOptions,
+          title: 'Détails du code',
+          presentation: 'card'
         }}
       />
       <Stack.Screen 
