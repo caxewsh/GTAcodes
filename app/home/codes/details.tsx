@@ -1,12 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography, borderRadius, shadows } from '../../../constants/theme';
-import Animated, { 
-  Layout,
-  FadeIn,
-} from 'react-native-reanimated';
-import { Stack, useLocalSearchParams, router } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 
 export default function CheatDetailsScreen() {
   const params = useLocalSearchParams();
@@ -21,28 +17,11 @@ export default function CheatDetailsScreen() {
 
   return (
     <View style={styles.container}>
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          title: 'Détails du code',
-          headerStyle: {
-            backgroundColor: colors.tab.background,
-          },
-          headerShadowVisible: false,
-          headerTintColor: colors.primary,
-          headerBackTitle: 'Retour',
-        }}
-      />
-
       <ScrollView 
         style={styles.content}
         contentContainerStyle={styles.contentContainer}
       >
-        <Animated.View 
-          entering={FadeIn.duration(200)}
-          layout={Layout.springify().damping(15)}
-          style={styles.cheatCard}
-        >
+        <View style={styles.cheatCard}>
           <View style={styles.cheatInfo}>
             <View style={styles.textContainer}>
               <Text style={styles.cheatName} numberOfLines={2}>
@@ -62,18 +41,15 @@ export default function CheatDetailsScreen() {
             </View>
           </View>
           
-          <Animated.View 
-            entering={FadeIn.duration(150)}
-            style={styles.expandedContent}
-          >
+          <View style={styles.expandedContent}>
             <Text style={styles.categoryText}>
               Catégorie : {cheat.cheatCategory}
             </Text>
             <View style={styles.separator} />
             <Text style={styles.codeTitle}>Code :</Text>
             <Text style={styles.codeText}>{cheat.cheatCode}</Text>
-          </Animated.View>
-        </Animated.View>
+          </View>
+        </View>
       </ScrollView>
     </View>
   );

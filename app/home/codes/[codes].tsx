@@ -10,7 +10,7 @@ import LikesLimitTooltip from '../../../components/LikesLimitTooltip';
 import { usePremium } from '../../../hooks/usePremium';
 import { PremiumModal } from '../../../components/PremiumModal';
 import { OnboardingModal } from '../../../components/OnboardingModal';
-import { CheatDetailsModal } from '../../../components/CheatDetailsModal';
+import { SearchBar } from '../../../components/SearchBar';
 
 interface CheatCode {
   id: number;
@@ -75,9 +75,9 @@ export default function GameCheatScreen() {
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
-  const [selectedCheat, setSelectedCheat] = useState<CheatCode | null>(null);
 
   React.useLayoutEffect(() => {
     if (game && navigation) {
@@ -89,9 +89,13 @@ export default function GameCheatScreen() {
     }
   }, [game, navigation]);
 
-  const filteredCheats = selectedCategory
-    ? cheats.filter(cheat => cheat.cheatCategory === selectedCategory)
-    : cheats;
+  const filteredCheats = cheats.filter(cheat => {
+    const matchesCategory = !selectedCategory || cheat.cheatCategory === selectedCategory;
+    const matchesSearch = searchQuery === '' || 
+      cheat.cheatName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      cheat.cheatCode.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   useEffect(() => {
     const fetchCheats = async () => {
@@ -129,6 +133,11 @@ export default function GameCheatScreen() {
 
   return (
     <View style={styles.container}>
+      <SearchBar
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+        placeholder="Rechercher un code..."
+      />
       <CheatFilters
         categories={categories}
         selectedCategory={selectedCategory}
@@ -187,12 +196,6 @@ export default function GameCheatScreen() {
       <PremiumModal
         isVisible={showPremiumModal}
         onClose={() => setShowPremiumModal(false)}
-      />
-
-      <CheatDetailsModal
-        isVisible={!!selectedCheat}
-        cheat={selectedCheat}
-        onClose={() => setSelectedCheat(null)}
       />
     </View>
   );
