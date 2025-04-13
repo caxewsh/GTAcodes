@@ -73,7 +73,7 @@ export default function AppLayout() {
             options={{
               title: 'Actualités',
               tabBarIcon: ({ color }) => <FontAwesome size={28} name="newspaper-o" color={color} />,
-              headerTitle: 'News Rockstar mag',
+              headerShown: false,
             }}
           />
             <Tabs.Screen
