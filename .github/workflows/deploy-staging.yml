@@ -6,70 +6,7 @@ on:
       - main
 
 jobs:
-  check-build-need:
-    runs-on: ubuntu-latest
-    outputs:
-      need_rebuild: ${{ steps.check.outputs.need_rebuild }}
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 2
-
-      - name: Check if rebuild needed
-        id: check
-        run: |
-          FILES_CHANGED=$(git diff --name-only HEAD^ HEAD)
-          if echo "$FILES_CHANGED" | grep -E 'package.json|yarn.lock|ios/|android/|app.json|eas.json'; then
-            echo "need_rebuild=true" >> $GITHUB_OUTPUT
-          else
-            echo "need_rebuild=false" >> $GITHUB_OUTPUT
-          fi
-
-  version-and-tag:
-    needs: [check-build-need]
-    runs-on: ubuntu-latest
-    outputs:
-      new_version: ${{ steps.calc_version.outputs.new_version }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Get latest tag and app version
-        id: get_versions
-        run: |
-          latest_tag=$(git tag --sort=-v:refname | grep '^v' | head -n 1 || echo "")
-          app_version=$(node -p "require('./app.json').expo.version")
-          echo "LATEST_TAG=${latest_tag}" >> $GITHUB_ENV
-          echo "APP_VERSION=${app_version}" >> $GITHUB_ENV
-
-      - name: Calculate new version
-        id: calc_version
-        run: |
-          if [ -z "$LATEST_TAG" ]; then
-            new_version="${APP_VERSION}"
-          else
-            current_version=${LATEST_TAG#v}
-            IFS='.' read -r major minor patch <<< "$current_version"
-            if [ "${{ needs.check-build-need.outputs.need_rebuild }}" = "true" ]; then
-              new_version="${major}.$((minor + 1)).0"
-            else
-              new_version="${major}.${minor}.$((patch + 1))"
-            fi
-          fi
-          echo "new_version=${new_version}" >> $GITHUB_OUTPUT
-          echo "NEW_VERSION=v${new_version}" >> $GITHUB_ENV
-
-      - name: Create tag
-        uses: cardinalby/git-tag-action@master
-        env:
-          TAG: ${{ env.NEW_VERSION }}
-          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
-
   deploy:
-    needs: [check-build-need, version-and-tag]
     runs-on: ubuntu-latest
     steps:
       - name: 🏗 Setup repo
@@ -90,11 +27,5 @@ jobs:
       - name: 📦 Install dependencies
         run: yarn install
 
-      - name: 🚀 Deploy to Staging
-        if: needs.check-build-need.outputs.need_rebuild == 'false'
-        run: eas update --channel staging --auto --non-interactive
-
-      - name: 🏗 Build & Submit Staging
-        if: needs.check-build-need.outputs.need_rebuild == 'true'
-        run: |
-          eas build --profile staging --platform ios --non-interactive
+      - name: 🚀 Build Staging
+        run: eas build --profile staging --platform ios --non-interactive
