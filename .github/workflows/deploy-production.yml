@@ -4,28 +4,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  check-build-need:
-    runs-on: ubuntu-latest
-    outputs:
-      need_rebuild: ${{ steps.check.outputs.need_rebuild }}
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 2
-
-      - name: Check if rebuild needed
-        id: check
-        run: |
-          FILES_CHANGED=$(git diff --name-only HEAD^ HEAD)
-          if echo "$FILES_CHANGED" | grep -E 'package.json|yarn.lock|ios/|app.json|eas.json'; then
-            echo "need_rebuild=true" >> $GITHUB_OUTPUT
-          else
-            echo "need_rebuild=false" >> $GITHUB_OUTPUT
-          fi
-
   deploy:
-    needs: [check-build-need]
     runs-on: ubuntu-latest
     steps:
       - name: 🏗 Setup repo
@@ -47,11 +26,6 @@ jobs:
         run: yarn install
 
       - name: 🚀 Build & Submit to TestFlight
-        if: needs.check-build-need.outputs.need_rebuild == 'true'
         run: |
           eas build --profile production --platform ios --non-interactive
           eas submit --platform ios --latest --non-interactive
-
-      - name: 🚀 Deploy OTA Update
-        if: needs.check-build-need.outputs.need_rebuild == 'false'
-        run: eas update --channel production --auto --non-interactive
